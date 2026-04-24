@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Crack SQL - Real Mobile Product</title>
+  <style>
+    :root {
+      --bg: #08101f;
+      --bg2: #0e1731;
+      --panel: rgba(18, 26, 48, 0.94);
+      --panel2: #162342;
+      --panel3: #0f1731;
+      --text: #edf2ff;
+      --muted: #93a4d6;
+      --accent: #6ee7b7;
+      --accent2: #60a5fa;
+      --accent3: #a78bfa;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --border: #2a3a67;
+      --shadow: 0 16px 36px rgba(0,0,0,.28);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #12224a 0%, var(--bg) 38%, #060b18 100%);
+    }
+    .app {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 16px 16px 96px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .brand {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+    .muted { color: var(--muted); }
+    .tiny { font-size: 12px; }
+    .hero {
+      background: linear-gradient(160deg, rgba(96,165,250,.16), rgba(110,231,183,.08), rgba(167,139,250,.12));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin: 16px 0 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(110,231,183,.25), transparent 68%);
+    }
+    .hero h1, .hero h2, .hero h3, .hero p { margin: 0; }
+    .hero-title { font-size: 20px; font-weight: 800; line-height: 1.2; }
+    .hero-sub { margin-top: 8px; color: var(--muted); line-height: 1.5; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .stat {
+      background: rgba(8, 15, 32, .44);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+    .stat strong { display: block; font-size: 18px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .chips, .filters, .btn-row, .field-list, .score-chips, .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip, .filter, .mini-badge, .field-chip, .score-chip {
+      font-size: 12px;
+      line-height: 1;
+      border-radius: 999px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+    }
+    .filter.active { background: rgba(96,165,250,.18); color: #dbeafe; border-color: rgba(96,165,250,.42); }
+    .mini-badge.green, .score-chip.good, .field-chip.pk { color: #bbf7d0; border-color: rgba(110,231,183,.34); }
+    .mini-badge.blue, .field-chip.fk { color: #bfdbfe; border-color: rgba(96,165,250,.34); }
+    .mini-badge.purple { color: #ddd6fe; border-color: rgba(167,139,250,.34); }
+    .score-chip.warn { color: #fde68a; border-color: rgba(251,191,36,.34); }
+    .score-chip.bad { color: #fecaca; border-color: rgba(248,113,113,.34); }
+    .scenario-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .scenario-card {
+      background: linear-gradient(180deg, #13203b, #10182d);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .scenario-card h3, .scenario-card p { margin: 0; }
+    .scenario-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+    .scenario-meta { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-top: 10px; }
+    .progress-bar {
+      height: 8px;
+      background: #0b1326;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.05);
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      width: 0%;
+      transition: width .3s ease;
+    }
+    .problem { line-height: 1.5; }
+    .schema-flow {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 12px;
+    }
+    .flow-box {
+      flex: 1;
+      text-align: center;
+      background: linear-gradient(180deg, #162548 0%, #101935 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 8px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .flow-arrow { color: var(--accent2); font-size: 18px; font-weight: 900; }
+    .schema-grid { display: grid; gap: 10px; }
+    .schema-card { background: var(--panel3); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .schema-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .join-line {
+      background: #0e162d; border: 1px dashed var(--border); border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-top: 8px;
+    }
+    textarea {
+      width: 100%;
+      background: #0b1326;
+      color: #dff7ea;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      resize: vertical;
+      min-height: 150px;
+      font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    #sqlOutput { min-height: 230px; }
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .primary { background: var(--accent); color: #072717; }
+    .secondary { background: var(--accent2); color: white; }
+    .tertiary { background: var(--accent3); color: white; }
+    .ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .danger { background: rgba(248,113,113,.14); color: #fecaca; border: 1px solid rgba(248,113,113,.28); }
+    .status {
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+      border: 1px solid transparent;
+    }
+    .ok { background: rgba(110,231,183,.14); color: var(--accent); border-color: rgba(110,231,183,.28); }
+    .warn { background: rgba(251,191,36,.14); color: #fde68a; border-color: rgba(251,191,36,.28); }
+    .bad { background: rgba(248,113,113,.14); color: #fecaca; border-color: rgba(248,113,113,.28); }
+    .info { background: rgba(96,165,250,.14); color: #bfdbfe; border-color: rgba(96,165,250,.28); }
+    .purplebox { background: rgba(167,139,250,.14); color: #ddd6fe; border-color: rgba(167,139,250,.28); }
+    .score-wrap {
+      display: grid;
+      grid-template-columns: 98px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .score-ring {
+      width: 98px; height: 98px; border-radius: 50%;
+      background: conic-gradient(var(--accent) 0deg, var(--accent) 0deg, #1c284b 0deg 360deg);
+      display: grid; place-items: center; position: relative;
+      margin: 0 auto;
+    }
+    .score-ring::after {
+      content: ""; position: absolute; inset: 9px; border-radius: 50%; background: #0f1730; border: 1px solid var(--border);
+    }
+    .score-text { position: relative; z-index: 1; font-weight: 900; text-align: center; line-height: 1.05; }
+    .score-text span { display: block; font-size: 11px; color: var(--muted); font-weight: 700; margin-top: 4px; }
+    .panel-box, .step-box {
+      background: var(--panel3);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .panel-box h4, .step-title { margin: 0 0 8px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .panel-box pre, .step-box code {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #dff7ea;
+    }
+    .step-box { border-left: 3px solid var(--accent2); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    th, td { text-align: left; border-bottom: 1px solid var(--border); padding: 10px 8px; vertical-align: top; }
+    th { color: var(--muted); font-weight: 800; }
+    .kbd {
+      padding: 2px 7px; background: #0b1326; border: 1px solid var(--border); border-radius: 8px; font-size: 12px;
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .nav {
+      position: fixed;
+      left: 50%; transform: translateX(-50%);
+      bottom: 12px;
+      width: min(520px, calc(100vw - 20px));
+      background: rgba(10,16,31,.92);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      backdrop-filter: blur(12px);
+    }
+    .nav button {
+      background: transparent; color: var(--muted); border: 1px solid transparent; padding: 10px 8px; border-radius: 14px;
+    }
+    .nav button.active { background: #152341; color: var(--text); border-color: var(--border); }
+    .empty {
+      text-align: center;
+      padding: 18px;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      background: rgba(255,255,255,.02);
+    }
+    .footer-note { color: var(--muted); font-size: 12px; text-align: center; margin-top: 18px; }
+    @media (min-width: 430px) {
+      .schema-grid { grid-template-columns: 1fr 1fr; }
+      .schema-card.full { grid-column: 1 / -1; }
+    }
+  
+/* Real mobile product polish */
+.splash-screen{position:fixed;inset:0;z-index:999;background:radial-gradient(circle at 20% 0%,rgba(110,231,183,.2),transparent 38%),linear-gradient(180deg,#07111f,#0b1730);display:grid;place-items:center;text-align:center;padding:24px;transition:.55s ease}.splash-screen.hide{opacity:0;pointer-events:none}.splash-logo{width:88px;height:88px;border-radius:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;color:#061521;font-size:30px;font-weight:1000;margin:0 auto 18px;box-shadow:0 28px 80px rgba(96,165,250,.32)}.splash-screen h1{margin:0;font-size:34px;letter-spacing:-.8px}.splash-screen p{color:var(--muted);line-height:1.5}.onboarding{position:fixed;inset:0;z-index:998;background:rgba(7,17,31,.96);display:none;place-items:end center;padding:18px}.onboarding.show{display:grid}.onboard-card{width:min(430px,100%);background:var(--panel);border:1px solid var(--border);border-radius:30px;padding:22px;box-shadow:0 28px 70px rgba(0,0,0,.42)}.onboard-card h2{font-size:24px;margin:8px 0}.onboard-card p{color:var(--muted);line-height:1.5}.premium-strip{background:linear-gradient(135deg,rgba(167,139,250,.20),rgba(96,165,250,.13));border:1px solid rgba(167,139,250,.34);border-radius:22px;padding:14px;margin:14px 0}.premium-strip b{display:block}.premium-strip span{display:block;color:var(--muted);font-size:12px;margin-top:4px}.level-lock{opacity:.65;filter:saturate(.55)}.product-badge{display:inline-flex;gap:6px;align-items:center;background:rgba(110,231,183,.12);border:1px solid rgba(110,231,183,.28);color:var(--accent);padding:7px 10px;border-radius:999px;font-size:11px;font-weight:900}.fab-practice{position:fixed;right:calc(50% - 200px);bottom:92px;width:54px;height:54px;border-radius:20px;border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#061521;font-size:24px;font-weight:1000;box-shadow:0 18px 50px rgba(96,165,250,.28);z-index:70}@media(max-width:430px){.fab-practice{right:16px}}
+</style>
+</head>
+<body>
+<div id="splashScreen" class="splash-screen"><div><div class="splash-logo">SQL</div><h1>Crack SQL</h1><p>Think first. Query next.<br>Scenario-based SQL practice app.</p></div></div>
+<div id="onboarding" class="onboarding"><div class="onboard-card"><span class="product-badge">Real mobile product</span><h2>Welcome to Crack SQL</h2><p>Practice SQL like a real analyst: read the scenario, understand schema, write pseudo logic, generate SQL, compare expert thinking, and track progress.</p><button class="btn primary" onclick="closeOnboarding()">Start Practicing</button></div></div>
+
+  <div class="app">
+    <div id="homeScreen" class="screen active"></div>
+    <div id="practiceScreen" class="screen"></div>
+    <div id="progressScreen" class="screen"></div>
+  </div>
+
+  <div class="nav">
+    <button id="navHome" class="active" onclick="showScreen('home')">Home</button>
+    <button id="navPractice" onclick="showScreen('practice')">Practice</button>
+    <button id="navProgress" onclick="showScreen('progress')">Progress</button>
+  </div>
+
+  <script>
+    const scenarios = [
+      {
+        id: 'banking_inactive',
+        title: 'Find Inactive Accounts',
+        domain: 'Banking',
+        level: 'Intermediate',
+        points: 10,
+        tags: ['LEFT JOIN','MAX','GROUP BY','HAVING'],
+        description: 'Find all bank accounts that have had no transactions in the last 90 days from the reference date 2026-04-01. Return account_id, customer_name, account_type, and last_transaction_date. Include accounts that never had any transaction.',
+        schema: {
+          flow: ['customers','accounts','transactions'],
+          tables: [
+            { name: 'customers', badge: 'master', badgeClass: 'green', fields: [['customer_id','pk'],['customer_name',''],['city','']] },
+            { name: 'accounts', badge: 'base table', badgeClass: 'blue', fields: [['account_id','pk'],['customer_id','fk'],['account_type',''],['open_date',''],['balance','']] },
+            { name: 'transactions', badge: 'activity table', badgeClass: 'purple', full: true, fields: [['transaction_id','pk'],['account_id','fk'],['transaction_date',''],['transaction_type',''],['amount','']] }
+          ],
+          joins: [
+            'customers.customer_id = accounts.customer_id',
+            'accounts.account_id = transactions.account_id'
+          ],
+          hint: 'Start from accounts, join customers, then LEFT JOIN transactions.'
+        },
+        logicKeywords: [
+          { key: ['start from accounts','from accounts','accounts as base'], score: 1, label: 'Starts from accounts' },
+          { key: ['join customers','customer details','customer_name'], score: 1, label: 'Brings customers' },
+          { key: ['left join','include accounts even if no transactions','no transactions'], score: 2, label: 'Keeps no-transaction accounts' },
+          { key: ['latest transaction','max transaction','max(transaction_date)','latest date'], score: 2, label: 'Finds latest transaction' },
+          { key: ['group by','per account'], score: 1, label: 'Groups correctly' },
+          { key: ['before 2026-01-01','older than 90 days','90 days'], score: 2, label: 'Inactive filter logic' },
+          { key: ['null','is null','never had'], score: 1, label: 'Handles null accounts' }
+        ],
+        improveBullets: [
+          'start from accounts',
+          'join customers to get customer name',
+          'left join transactions so accounts without transactions are retained',
+          'find max(transaction_date) as latest transaction date for each account',
+          'group by account and customer details',
+          'keep accounts where latest transaction date is before 2026-01-01 or null',
+          'sort by oldest last transaction date first'
+        ],
+        sampleThinking: `- start from accounts\n- join customers\n- include accounts even if no transactions exist\n- find latest transaction date for each account\n- group by account and customer details\n- keep only accounts where latest transaction is before 2026-01-01 or null\n- sort by oldest last transaction first`,
+        expertThinking: `1. Use accounts as the base table because the result must include all accounts.\n2. Join customers to bring customer_name.\n3. LEFT JOIN transactions so accounts with no activity are still included.\n4. Aggregate transaction rows using MAX(transaction_date).\n5. Group by account_id, customer_name, and account_type.\n6. Filter with HAVING because the condition depends on MAX(transaction_date).\n7. Keep rows where the latest date is older than 2026-01-01 or is NULL.`,
+        starterSql: `SELECT\n    a.account_id,\n    c.customer_name,\n    a.account_type,\n    MAX(t.transaction_date) AS last_transaction_date\nFROM accounts a\nJOIN customers c\n    ON a.customer_id = c.customer_id\nLEFT JOIN transactions t\n    ON a.account_id = t.account_id\nGROUP BY\n    a.account_id,\n    c.customer_name,\n    a.account_type\nHAVING\n    MAX(t.transaction_date) < DATE '2026-01-01'\n    OR MAX(t.transaction_date) IS NULL\nORDER BY last_transaction_date ASC;`,
+        stepSql: [
+          ['Step 1 · Base', 'SELECT a.account_id, c.customer_name, a.account_type\nFROM accounts a'],
+          ['Step 2 · Bring customer', 'JOIN customers c\n  ON a.customer_id = c.customer_id'],
+          ['Step 3 · Keep all accounts', 'LEFT JOIN transactions t\n  ON a.account_id = t.account_id'],
+          ['Step 4 · Latest transaction', 'MAX(t.transaction_date) AS last_transaction_date'],
+          ['Step 5 · Aggregate and filter', 'GROUP BY a.account_id, c.customer_name, a.account_type\nHAVING MAX(t.transaction_date) < DATE \'2026-01-01\'\n   OR MAX(t.transaction_date) IS NULL'],
+          ['Step 6 · Final order', 'ORDER BY last_transaction_date ASC']
+        ],
+        expectedOutput: [
+          ['102','Meena Ravi','Current','2025-12-01'],
+          ['104','Divya Shree','Savings','2025-12-20'],
+          ['106','Lavanya M','Savings','NULL']
+        ],
+        validateSql(sql) {
+          const s = normalize(sql);
+          return [
+            { name: 'Starts from accounts', pass: /from\s+accounts(\s+[a-z])?/.test(s) },
+            { name: 'Brings customers', pass: /join\s+customers(\s+[a-z])?/.test(s) },
+            { name: 'Keeps accounts with no transactions', pass: /left\s+join\s+transactions(\s+[a-z])?/.test(s) },
+            { name: 'Finds latest transaction', pass: s.includes('max(t.transaction_date)') || s.includes('max(transaction_date)') },
+            { name: 'Groups by account', pass: s.includes('group by') && s.includes('account_id') },
+            { name: 'Filters inactive accounts', pass: s.includes('2026-01-01') || s.includes('90 day') || s.includes('90 days') },
+            { name: 'Includes no-transaction accounts', pass: s.includes('is null') },
+            { name: 'Sorts oldest first', pass: /order by\s+.*last_transaction_date.*asc/.test(s) || /order by\s+.*max\(.*transaction_date.*\).*asc/.test(s) }
+          ];
+        }
+      },
+      {
+        id: 'healthcare_followup',
+        title: 'Patients Missing Follow-up',
+        domain: 'Healthcare',
+        level: 'Intermediate',
+        points: 10,
+        tags: ['JOIN','DATE FILTER','COUNT','GROUP BY'],
+        description: 'Find patients whose last completed visit was more than 180 days ago as of 2026-04-01 and who do not have any future appointment booked. Return patient_id, patient_name, department, last_visit_date.',
+        schema: {
+          flow: ['patients','visits','appointments'],
+          tables: [
+            { name: 'patients', badge: 'master', badgeClass: 'green', fields: [['patient_id','pk'],['patient_name',''],['department','']] },
+            { name: 'visits', badge: 'history', badgeClass: 'blue', fields: [['visit_id','pk'],['patient_id','fk'],['visit_date',''],['visit_status','']] },
+            { name: 'appointments', badge: 'future booking', badgeClass: 'purple', full: true, fields: [['appointment_id','pk'],['patient_id','fk'],['appointment_date',''],['status','']] }
+          ],
+          joins: ['patients.patient_id = visits.patient_id','patients.patient_id = appointments.patient_id'],
+          hint: 'Use completed visits for latest history and exclude patients with upcoming booked appointments.'
+        },
+        logicKeywords: [
+          { key: ['patients as base','start from patients','from patients'], score: 1, label: 'Starts from patients' },
+          { key: ['completed visit','completed visits'], score: 2, label: 'Uses completed visits' },
+          { key: ['last visit','max(visit_date)','latest visit'], score: 2, label: 'Finds last visit date' },
+          { key: ['future appointment','upcoming appointment','no future appointment'], score: 2, label: 'Checks future bookings' },
+          { key: ['180 days','before 2025-10-03'], score: 2, label: 'Applies follow-up threshold' },
+          { key: ['group by','per patient'], score: 1, label: 'Groups correctly' }
+        ],
+        improveBullets: [
+          'start from patients',
+          'join visits and keep only completed visits to find the last visit date',
+          'find max(visit_date) per patient',
+          'left join future booked appointments',
+          'exclude patients who already have a future appointment',
+          'keep only last visit dates older than 180 days from 2026-04-01',
+          'return patient id, patient name, department, and last visit date'
+        ],
+        sampleThinking: `- start from patients\n- use completed visits only\n- find max visit_date as last visit\n- check whether a future appointment already exists\n- keep only patients without future booked appointments\n- keep last visit older than 180 days`,
+        expertThinking: `1. Patients should be the base so each candidate patient is considered.\n2. Completed visits form the visit history; cancelled visits should not count.\n3. Use MAX(visit_date) per patient to determine the last completed visit.\n4. Future booked appointments must be excluded.\n5. Use HAVING or outer filtering to keep last visits older than the threshold.`,
+        starterSql: `SELECT\n    p.patient_id,\n    p.patient_name,\n    p.department,\n    MAX(v.visit_date) AS last_visit_date\nFROM patients p\nJOIN visits v\n    ON p.patient_id = v.patient_id\nLEFT JOIN appointments a\n    ON p.patient_id = a.patient_id\n   AND a.appointment_date > DATE '2026-04-01'\n   AND a.status = 'BOOKED'\nWHERE v.visit_status = 'COMPLETED'\nGROUP BY p.patient_id, p.patient_name, p.department\nHAVING MAX(v.visit_date) < DATE '2025-10-03'\n   AND COUNT(a.appointment_id) = 0\nORDER BY last_visit_date ASC;`,
+        stepSql: [
+          ['Step 1 · Base', 'SELECT p.patient_id, p.patient_name, p.department\nFROM patients p'],
+          ['Step 2 · Visit history', 'JOIN visits v\n  ON p.patient_id = v.patient_id\nWHERE v.visit_status = \'COMPLETED\''],
+          ['Step 3 · Future appointments', 'LEFT JOIN appointments a\n  ON p.patient_id = a.patient_id\n AND a.appointment_date > DATE \'2026-04-01\'\n AND a.status = \'BOOKED\''],
+          ['Step 4 · Last visit', 'MAX(v.visit_date) AS last_visit_date'],
+          ['Step 5 · Filter', 'GROUP BY p.patient_id, p.patient_name, p.department\nHAVING MAX(v.visit_date) < DATE \'2025-10-03\'\n   AND COUNT(a.appointment_id) = 0']
+        ],
+        expectedOutput: [['P102','Arun Kumar','Cardiology','2025-08-12'],['P118','Sangeetha R','Dermatology','2025-09-03']],
+        validateSql(sql) {
+          const s = normalize(sql);
+          return [
+            { name: 'Starts from patients', pass: /from\s+patients(\s+[a-z])?/.test(s) },
+            { name: 'Uses visits table', pass: /join\s+visits(\s+[a-z])?/.test(s) },
+            { name: 'Filters completed visits', pass: s.includes('completed') },
+            { name: 'Checks appointments', pass: s.includes('appointments') },
+            { name: 'Finds max visit date', pass: s.includes('max(v.visit_date)') || s.includes('max(visit_date)') },
+            { name: 'Uses 180-day threshold', pass: s.includes('2025-10-03') || s.includes('180 day') || s.includes('180 days') },
+            { name: 'Excludes future bookings', pass: s.includes('count(a.appointment_id) = 0') || s.includes('is null') },
+            { name: 'Groups by patient', pass: s.includes('group by') && s.includes('patient_id') }
+          ];
+        }
+      },
+      {
+        id: 'insurance_claim_ratio',
+        title: 'Policies with High Claim Ratio',
+        domain: 'Insurance',
+        level: 'Intermediate',
+        points: 10,
+        tags: ['CASE','SUM','GROUP BY','HAVING'],
+        description: 'Find active policies where total approved claim amount in the last 12 months is more than 70% of annual premium. Return policy_id, customer_name, annual_premium, total_approved_claim, claim_ratio.',
+        schema: {
+          flow: ['customers','policies','claims'],
+          tables: [
+            { name: 'customers', badge: 'master', badgeClass: 'green', fields: [['customer_id','pk'],['customer_name','']] },
+            { name: 'policies', badge: 'base table', badgeClass: 'blue', fields: [['policy_id','pk'],['customer_id','fk'],['annual_premium',''],['policy_status','']] },
+            { name: 'claims', badge: 'fact table', badgeClass: 'purple', full: true, fields: [['claim_id','pk'],['policy_id','fk'],['claim_date',''],['claim_status',''],['claim_amount','']] }
+          ],
+          joins: ['customers.customer_id = policies.customer_id','policies.policy_id = claims.policy_id'],
+          hint: 'Use approved claims only and compare total claim amount to annual premium.'
+        },
+        logicKeywords: [
+          { key: ['from policies','start from policies'], score: 1, label: 'Starts from policies' },
+          { key: ['active policies','policy_status'], score: 1, label: 'Filters active policies' },
+          { key: ['approved claims','approved'], score: 2, label: 'Uses approved claims only' },
+          { key: ['sum(claim_amount)','total claim amount','sum claim'], score: 2, label: 'Sums approved claims' },
+          { key: ['12 months','2025-04-01'], score: 2, label: 'Uses time window' },
+          { key: ['70%','0.7','claim ratio'], score: 2, label: 'Compares against premium' }
+        ],
+        improveBullets: [
+          'start from active policies',
+          'join customers to get customer name',
+          'left join claims for the last 12 months',
+          'consider only approved claims',
+          'sum approved claim amount per policy',
+          'calculate claim ratio = total approved claim / annual premium',
+          'keep only policies where ratio is greater than 0.7'
+        ],
+        sampleThinking: `- start from active policies\n- join customers\n- take approved claims in the last 12 months\n- sum claim amount per policy\n- calculate ratio against annual premium\n- keep only ratios above 70%`,
+        expertThinking: `1. Policies should drive the result because one ratio is needed per policy.\n2. Filter to active policies first.\n3. Limit claim rows to approved claims in the rolling 12-month window.\n4. Aggregate total claim amount.\n5. Compute ratio with annual premium and filter above 0.7.`,
+        starterSql: `SELECT\n    p.policy_id,\n    c.customer_name,\n    p.annual_premium,\n    SUM(CASE WHEN cl.claim_status = 'APPROVED' THEN cl.claim_amount ELSE 0 END) AS total_approved_claim,\n    ROUND(SUM(CASE WHEN cl.claim_status = 'APPROVED' THEN cl.claim_amount ELSE 0 END) / p.annual_premium, 2) AS claim_ratio\nFROM policies p\nJOIN customers c\n    ON p.customer_id = c.customer_id\nLEFT JOIN claims cl\n    ON p.policy_id = cl.policy_id\n   AND cl.claim_date >= DATE '2025-04-01'\nWHERE p.policy_status = 'ACTIVE'\nGROUP BY p.policy_id, c.customer_name, p.annual_premium\nHAVING SUM(CASE WHEN cl.claim_status = 'APPROVED' THEN cl.claim_amount ELSE 0 END) > p.annual_premium * 0.7\nORDER BY claim_ratio DESC;`,
+        stepSql: [
+          ['Step 1 · Base', 'SELECT p.policy_id, c.customer_name, p.annual_premium\nFROM policies p'],
+          ['Step 2 · Active policies', 'WHERE p.policy_status = \'ACTIVE\''],
+          ['Step 3 · Bring claims', 'LEFT JOIN claims cl\n  ON p.policy_id = cl.policy_id\n AND cl.claim_date >= DATE \'2025-04-01\''],
+          ['Step 4 · Sum approved claim', 'SUM(CASE WHEN cl.claim_status = \'APPROVED\' THEN cl.claim_amount ELSE 0 END) AS total_approved_claim'],
+          ['Step 5 · Ratio filter', 'HAVING SUM(CASE WHEN cl.claim_status = \'APPROVED\' THEN cl.claim_amount ELSE 0 END) > p.annual_premium * 0.7']
+        ],
+        expectedOutput: [['PL204','Shiva Kumar','120000','96000','0.80'],['PL317','Malarvizhi S','90000','67500','0.75']],
+        validateSql(sql) {
+          const s = normalize(sql);
+          return [
+            { name: 'Starts from policies', pass: /from\s+policies(\s+[a-z])?/.test(s) },
+            { name: 'Brings customers', pass: /join\s+customers(\s+[a-z])?/.test(s) },
+            { name: 'Uses claims', pass: s.includes('claims') },
+            { name: 'Filters active policies', pass: s.includes('active') },
+            { name: 'Uses approved claims', pass: s.includes('approved') },
+            { name: 'Sums claim amount', pass: s.includes('sum(') },
+            { name: 'Uses 12-month window', pass: s.includes('2025-04-01') || s.includes('12 month') || s.includes('12 months') },
+            { name: 'Applies 70% threshold', pass: s.includes('0.7') || s.includes('70%') }
+          ];
+        }
+      },
+      {
+        id: 'retail_repeat',
+        title: 'Top Repeat Customers',
+        domain: 'Retail',
+        level: 'Beginner+',
+        points: 10,
+        tags: ['COUNT DISTINCT','SUM','GROUP BY','ORDER BY'],
+        description: 'Find customers who placed orders in at least 3 different months in Q1 2026 and spent more than 50,000 total. Return customer_id, customer_name, active_months, total_spend.',
+        schema: {
+          flow: ['customers','orders','order_items'],
+          tables: [
+            { name: 'customers', badge: 'master', badgeClass: 'green', fields: [['customer_id','pk'],['customer_name','']] },
+            { name: 'orders', badge: 'base table', badgeClass: 'blue', fields: [['order_id','pk'],['customer_id','fk'],['order_date',''],['order_status','']] },
+            { name: 'order_items', badge: 'detail table', badgeClass: 'purple', full: true, fields: [['order_item_id','pk'],['order_id','fk'],['quantity',''],['unit_price','']] }
+          ],
+          joins: ['customers.customer_id = orders.customer_id','orders.order_id = order_items.order_id'],
+          hint: 'Need both order frequency across months and spend amount.'
+        },
+        logicKeywords: [
+          { key: ['from orders','start from orders'], score: 1, label: 'Starts from orders' },
+          { key: ['q1 2026','january february march','2026-01-01'], score: 2, label: 'Uses correct quarter' },
+          { key: ['3 different months','count distinct month'], score: 3, label: 'Counts active months' },
+          { key: ['sum amount','total spend','quantity * unit_price'], score: 2, label: 'Calculates spend' },
+          { key: ['50000','50,000'], score: 1, label: 'Applies spend threshold' },
+          { key: ['group by customer'], score: 1, label: 'Groups by customer' }
+        ],
+        improveBullets: [
+          'start from orders in Q1 2026',
+          'join customers and order_items',
+          'count distinct order months for each customer',
+          'sum quantity * unit_price as total spend',
+          'keep customers with at least 3 active months',
+          'keep customers with total spend greater than 50000',
+          'order by total spend descending'
+        ],
+        sampleThinking: `- start from orders in Q1 2026\n- join customers and order_items\n- count distinct order months per customer\n- total spend = quantity * unit_price\n- keep active months >= 3 and spend > 50000`,
+        expertThinking: `1. Order rows define customer activity in the quarter.\n2. Limit to Q1 2026.\n3. Count distinct months of activity per customer.\n4. Sum item value across all orders.\n5. Filter on both month count and total spend.`,
+        starterSql: `SELECT\n    c.customer_id,\n    c.customer_name,\n    COUNT(DISTINCT TO_CHAR(o.order_date, 'YYYY-MM')) AS active_months,\n    SUM(oi.quantity * oi.unit_price) AS total_spend\nFROM orders o\nJOIN customers c\n    ON o.customer_id = c.customer_id\nJOIN order_items oi\n    ON o.order_id = oi.order_id\nWHERE o.order_date >= DATE '2026-01-01'\n  AND o.order_date < DATE '2026-04-01'\n  AND o.order_status = 'COMPLETED'\nGROUP BY c.customer_id, c.customer_name\nHAVING COUNT(DISTINCT TO_CHAR(o.order_date, 'YYYY-MM')) >= 3\n   AND SUM(oi.quantity * oi.unit_price) > 50000\nORDER BY total_spend DESC;`,
+        stepSql: [
+          ['Step 1 · Quarter filter', 'FROM orders o\nWHERE o.order_date >= DATE \'2026-01-01\'\n  AND o.order_date < DATE \'2026-04-01\''],
+          ['Step 2 · Joins', 'JOIN customers c ON o.customer_id = c.customer_id\nJOIN order_items oi ON o.order_id = oi.order_id'],
+          ['Step 3 · Measures', 'COUNT(DISTINCT TO_CHAR(o.order_date, \'YYYY-MM\')) AS active_months\nSUM(oi.quantity * oi.unit_price) AS total_spend'],
+          ['Step 4 · Result filter', 'HAVING COUNT(DISTINCT TO_CHAR(o.order_date, \'YYYY-MM\')) >= 3\n   AND SUM(oi.quantity * oi.unit_price) > 50000']
+        ],
+        expectedOutput: [['C011','Ranjani T','3','68500'],['C078','Mohammed I','3','53250']],
+        validateSql(sql) {
+          const s = normalize(sql);
+          return [
+            { name: 'Uses orders as base', pass: /from\s+orders(\s+[a-z])?/.test(s) },
+            { name: 'Joins customers', pass: s.includes('customers') },
+            { name: 'Joins order items', pass: s.includes('order_items') },
+            { name: 'Filters Q1 2026', pass: s.includes('2026-01-01') && s.includes('2026-04-01') },
+            { name: 'Counts distinct months', pass: s.includes('count(distinct') },
+            { name: 'Calculates spend', pass: s.includes('quantity * oi.unit_price') || s.includes('quantity*unit_price') || s.includes('sum(') },
+            { name: 'Applies 3 month threshold', pass: s.includes('>= 3') || s.includes('3 different months') },
+            { name: 'Applies spend threshold', pass: s.includes('50000') }
+          ];
+        }
+      }
+    ];
+
+    const state = {
+      currentScenarioId: scenarios[0].id,
+      activeDomain: 'All',
+      screen: 'home',
+      progress: loadProgress()
+    };
+
+    function normalize(s) {
+      return (s || '').toLowerCase().replace(/&lt;/g, '<').replace(/\s+/g, ' ').trim();
+    }
+
+    function getScenario(id) {
+      return scenarios.find(s => s.id === id) || scenarios[0];
+    }
+
+    function loadProgress() {
+      try {
+        return JSON.parse(localStorage.getItem('thinkQueryProgress') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveProgress() {
+      localStorage.setItem('thinkQueryProgress', JSON.stringify(state.progress));
+    }
+
+    function getScenarioProgress(id) {
+      if (!state.progress[id]) {
+        state.progress[id] = { thinking: '', sql: '', bestScore: 0, completed: false, lastValidation: 0 };
+      }
+      return state.progress[id];
+    }
+
+    function domainList() {
+      return ['All', ...new Set(scenarios.map(s => s.domain))];
+    }
+
+    function totalCompleted() {
+      return scenarios.filter(s => getScenarioProgress(s.id).completed).length;
+    }
+
+    function averageScore() {
+      const scores = scenarios.map(s => getScenarioProgress(s.id).bestScore || 0);
+      return scores.length ? Math.round(scores.reduce((a,b)=>a+b,0) / scores.length) : 0;
+    }
+
+    function renderHome() {
+      const domains = domainList();
+      const filtered = state.activeDomain === 'All' ? scenarios : scenarios.filter(s => s.domain === state.activeDomain);
+      const html = `
+        <div class="topbar">
+          <div>
+            <div class="brand">Crack SQL</div>
+            <div class="muted">Mobile Product • Crack SQL by logic</div>
+          </div>
+          <button class="ghost" onclick="resetApp()">Reset</button>
+        </div>
+
+        <div class="hero">
+          <div class="hero-title">Think in pseudo logic. Convert it into SQL.</div>
+          <div class="hero-sub">Practice real business scenarios across domains. Write your own algorithm, generate SQL, compare with expert logic, and track your progress.</div>
+          <div class="premium-strip"><b>🔥 Product Mode Enabled</b><span>Splash screen, onboarding, progress, saved practice, expert comparison, step-by-step SQL reveal, and premium level preview.</span></div><div class="stats">
+            <div class="stat"><strong>${scenarios.length}</strong><span class="tiny muted">Scenarios</span></div>
+            <div class="stat"><strong>${totalCompleted()}</strong><span class="tiny muted">Completed</span></div>
+            <div class="stat"><strong>${averageScore()}%</strong><span class="tiny muted">Avg score</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Domains</div>
+          <div class="filters">
+            ${domains.map(d => `<button class="filter ${state.activeDomain===d?'active':''}" onclick="setDomain('${escapeJs(d)}')">${d}</button>`).join('')}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Scenario Library <span class="tiny muted">Tap any card to open</span></div>
+          <div class="scenario-grid">
+            ${filtered.map(s => scenarioCardHtml(s)).join('')}
+          </div>
+        </div>
+
+        <div class="footer-note">Single-file mobile app • progress saved on device</div>
+      `;
+      document.getElementById('homeScreen').innerHTML = html;
+    }
+
+    function scenarioCardHtml(s) {
+      const p = getScenarioProgress(s.id);
+      const pct = Math.min(100, p.bestScore * 10);
+      return `
+        <div class="scenario-card" onclick="openScenario('${s.id}')">
+          <div class="chips" style="margin-bottom:8px;">
+            <span class="chip">${s.domain}</span>
+            <span class="chip">${s.level}</span>
+            <span class="chip">${s.points} pts</span>
+          </div>
+          <div class="scenario-title">${s.title}</div>
+          <p class="muted tiny">${s.description}</p>
+          <div class="chips" style="margin-top:10px;">
+            ${s.tags.slice(0,4).map(t => `<span class="chip">${t}</span>`).join('')}
+          </div>
+          <div class="scenario-meta">
+            <div style="flex:1;">
+              <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>
+            </div>
+            <div class="tiny ${p.completed ? '' : 'muted'}">${p.completed ? 'Completed' : `Best ${p.bestScore || 0}/10`}</div>
+          </div>
+        </div>`;
+    }
+
+    function renderPractice() {
+      const s = getScenario(state.currentScenarioId);
+      const p = getScenarioProgress(s.id);
+      const score = scoreThinking(s, p.thinking || '');
+      const html = `
+        <div class="topbar">
+          <div>
+            <div class="brand" style="font-size:24px;">Practice</div>
+            <div class="muted">${s.domain} • ${s.level}</div>
+          </div>
+          <button class="ghost" onclick="showScreen('home')">Back Home</button>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Scenario</div>
+          <h2 style="margin:0 0 10px;">${s.title}</h2>
+          <div class="chips">${s.tags.map(t => `<span class="chip">${t}</span>`).join('')}</div>
+          <p class="problem" style="margin-top:12px;">${formatInlineKbd(s.description)}</p>
+        </div>
+
+        ${renderSchema(s)}
+
+        <div class="card">
+          <div class="section-title">Your Thinking <span class="tiny muted">Pseudo / Algo / Plain English</span></div>
+          <textarea id="thinkInput" placeholder="Write your logic here...">${escapeHtml(p.thinking || '')}</textarea>
+          <div class="btn-row" style="margin-top:12px;">
+            <button class="primary" onclick="generateSQL()">Generate SQL</button>
+            <button class="secondary" onclick="showSampleThinking()">Sample Thinking</button>
+            <button class="ghost" onclick="improveLogic()">Improve Logic</button>
+            <button class="ghost" onclick="saveThinking()">Save</button>
+          </div>
+          <div id="thinkStatus">${score.statusHtml}</div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Thinking Score</div>
+          <div class="score-wrap">
+            <div class="score-ring" id="scoreRing" style="background:${score.ring};"><div class="score-text">${score.total}/10<span>Thinking</span></div></div>
+            <div>
+              <div class="score-chips">${score.labels.map(x => `<span class="score-chip ${x.pass ? 'good' : 'bad'}">${x.pass ? '✓' : '✗'} ${x.label}</span>`).join('')}</div>
+              <div class="status ${score.total >= 8 ? 'ok' : score.total >= 5 ? 'warn' : 'bad'}">${score.message}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Generated SQL</div>
+          <textarea id="sqlOutput" placeholder="Generated SQL will appear here...">${escapeHtml(p.sql || '')}</textarea>
+          <div class="btn-row" style="margin-top:12px;">
+            <button class="primary" onclick="testSql()">Test SQL</button>
+            <button class="tertiary" onclick="compareExpert()">Compare with Expert</button>
+            <button class="secondary" onclick="showStepSql()">Step-by-Step SQL</button>
+            <button class="ghost" onclick="useStarterSql()">Use Starter SQL</button>
+          </div>
+          <div id="sqlStatus"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Expected Output</div>
+          ${renderExpectedOutput(s.expectedOutput)}
+        </div>
+
+        <div class="footer-note">Practice flow: Scenario → Schema → Think → Generate SQL → Compare → Validate</div>
+      `;
+      document.getElementById('practiceScreen').innerHTML = html;
+    }
+
+    function renderSchema(s) {
+      return `
+        <div class="card">
+          <div class="section-title">Schema Map</div>
+          <div class="schema-flow">
+            ${s.schema.flow.map((f, idx) => `${idx ? '<div class="flow-arrow">→</div>' : ''}<div class="flow-box">${f}</div>`).join('')}
+          </div>
+          <div class="schema-grid">
+            ${s.schema.tables.map(t => `
+              <div class="schema-card ${t.full ? 'full' : ''}">
+                <div class="schema-head">
+                  <strong>${t.name}</strong>
+                  <span class="mini-badge ${t.badgeClass || ''}">${t.badge}</span>
+                </div>
+                <div class="field-list">
+                  ${t.fields.map(([f, type]) => `<span class="field-chip ${type || ''}">${f}${type==='pk' ? ' · PK' : type==='fk' ? ' · FK' : ''}</span>`).join('')}
+                </div>
+              </div>`).join('')}
+          </div>
+          ${s.schema.joins.map((j,i) => `<div class="join-line"><b>Join ${i+1}:</b> ${j}</div>`).join('')}
+          <div class="join-line"><b>Scenario hint:</b> ${s.schema.hint}</div>
+        </div>`;
+    }
+
+    function renderExpectedOutput(rows) {
+      const first = rows[0] || [];
+      const headers = first.map((_,i)=>i);
+      return `<table>
+        <thead><tr>${first.map((_,i)=>`<th>${guessHeader(i)}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(r => `<tr>${r.map(v => `<td>${v}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table>`;
+    }
+
+    function guessHeader(i) {
+      const s = getScenario(state.currentScenarioId);
+      const map = {
+        banking_inactive: ['account_id','customer_name','account_type','last_transaction_date'],
+        healthcare_followup: ['patient_id','patient_name','department','last_visit_date'],
+        insurance_claim_ratio: ['policy_id','customer_name','annual_premium','total_approved_claim','claim_ratio'],
+        retail_repeat: ['customer_id','customer_name','active_months','total_spend']
+      };
+      return (map[s.id] || [])[i] || `col_${i+1}`;
+    }
+
+    function renderProgress() {
+      const completed = scenarios.filter(s => getScenarioProgress(s.id).completed);
+      const recent = scenarios.map(s => ({ s, p: getScenarioProgress(s.id) })).sort((a,b)=>(b.p.lastValidation||0)-(a.p.lastValidation||0));
+      const html = `
+        <div class="topbar">
+          <div>
+            <div class="brand" style="font-size:24px;">Progress</div>
+            <div class="muted">Your saved practice performance</div>
+          </div>
+          <button class="ghost" onclick="showScreen('practice')">Go Practice</button>
+        </div>
+
+        <div class="hero">
+          <div class="hero-title">Keep improving the thinking, not just the query.</div>
+          <div class="hero-sub">Your logic quality matters. The app tracks best thinking score, completion status, and saved work per scenario.</div>
+          <div class="stats">
+            <div class="stat"><strong>${totalCompleted()}</strong><span class="tiny muted">Done</span></div>
+            <div class="stat"><strong>${averageScore()}%</strong><span class="tiny muted">Avg score</span></div>
+            <div class="stat"><strong>${scenarios.length - totalCompleted()}</strong><span class="tiny muted">Pending</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Scenario Scores</div>
+          <table>
+            <thead><tr><th>Scenario</th><th>Domain</th><th>Best Score</th><th>Status</th></tr></thead>
+            <tbody>
+              ${scenarios.map(s => {
+                const p = getScenarioProgress(s.id);
+                return `<tr>
+                  <td>${s.title}</td>
+                  <td>${s.domain}</td>
+                  <td>${p.bestScore || 0}/10</td>
+                  <td>${p.completed ? '✅ Complete' : '⏳ In progress'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Recent Work</div>
+          ${recent.some(x => x.p.thinking || x.p.sql) ? `
+            <div class="scenario-grid">
+              ${recent.filter(x => x.p.thinking || x.p.sql).slice(0,4).map(({s,p}) => `
+                <div class="scenario-card" onclick="openScenario('${s.id}')">
+                  <div class="scenario-title">${s.title}</div>
+                  <p class="muted tiny">${p.thinking ? truncate(p.thinking, 110) : 'SQL saved.'}</p>
+                  <div class="scenario-meta"><span class="tiny muted">Best ${p.bestScore || 0}/10</span><span class="tiny">${p.completed ? 'Completed' : 'Continue'}</span></div>
+                </div>`).join('')}
+            </div>` : `<div class="empty">No saved work yet. Open a scenario and start practicing.</div>`}
+        </div>
+      `;
+      document.getElementById('progressScreen').innerHTML = html;
+    }
+
+    function showScreen(name) {
+      state.screen = name;
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.getElementById(name + 'Screen').classList.add('active');
+      document.querySelectorAll('.nav button').forEach(el => el.classList.remove('active'));
+      document.getElementById('nav' + capitalize(name)).classList.add('active');
+      if (name === 'home') renderHome();
+      if (name === 'practice') renderPractice();
+      if (name === 'progress') renderProgress();
+    }
+
+    function openScenario(id) {
+      state.currentScenarioId = id;
+      showScreen('practice');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setDomain(domain) {
+      state.activeDomain = domain;
+      renderHome();
+    }
+
+    function scoreThinking(scenario, text) {
+      const t = normalize(text);
+      let total = 0;
+      const labels = scenario.logicKeywords.map(rule => {
+        const pass = rule.key.some(k => t.includes(k));
+        if (pass) total += rule.score;
+        return { label: rule.label, pass };
+      });
+      if (total > 10) total = 10;
+      const deg = Math.round((total / 10) * 360);
+      const ring = `conic-gradient(var(--accent) 0deg, var(--accent) ${deg}deg, #1c284b ${deg}deg 360deg)`;
+      let message = 'Start by writing the basic join path and filter logic.';
+      if (total >= 8) message = 'Strong thinking. Your business logic is almost interview-ready.';
+      else if (total >= 5) message = 'Good direction. Add the missing business conditions to strengthen the logic.';
+      const statusHtml = text.trim()
+        ? `<div class="status ${total >= 8 ? 'ok' : total >= 5 ? 'warn' : 'bad'}">${message}</div>`
+        : `<div class="status info">Write your own pseudo logic first. The app will score the thinking and generate SQL from it.</div>`;
+      return { total, labels, message, ring, statusHtml };
+    }
+
+    function currentInputs() {
+      return {
+        think: document.getElementById('thinkInput')?.value || '',
+        sql: document.getElementById('sqlOutput')?.value || ''
+      };
+    }
+
+    function persistCurrent() {
+      const s = getScenario(state.currentScenarioId);
+      const p = getScenarioProgress(s.id);
+      const inputs = currentInputs();
+      p.thinking = inputs.think;
+      p.sql = inputs.sql;
+      const score = scoreThinking(s, inputs.think).total;
+      p.bestScore = Math.max(p.bestScore || 0, score);
+      saveProgress();
+    }
+
+    function saveThinking() {
+      persistCurrent();
+      const box = document.getElementById('thinkStatus');
+      if (box) box.innerHTML = `<div class="status ok">Saved. Your current thinking is stored on this device.</div>`;
+      renderProgress();
+    }
+
+    function showSampleThinking() {
+      const s = getScenario(state.currentScenarioId);
+      document.getElementById('thinkInput').value = s.sampleThinking;
+      refreshThinkingScore();
+    }
+
+    function improveLogic() {
+      const s = getScenario(state.currentScenarioId);
+      const el = document.getElementById('thinkInput');
+      const current = normalize(el.value);
+      const lines = el.value.trim() ? el.value.trim().split(/\n+/).map(x => x.trim()).filter(Boolean) : [];
+      s.improveBullets.forEach(b => {
+        if (!current.includes(b.toLowerCase())) lines.push('- ' + b);
+      });
+      el.value = lines.join('\n');
+      refreshThinkingScore(`<div class="status ok">Logic improved. Missing business steps were added.</div>`);
+    }
+
+    function generateSQL() {
+      const s = getScenario(state.currentScenarioId);
+      const think = document.getElementById('thinkInput').value;
+      const score = scoreThinking(s, think).total;
+      let sql = s.starterSql;
+      if (score < 4 && !think.trim()) {
+        sql = '-- Write your pseudo logic first, then generate SQL.\n\n' + s.starterSql;
+      }
+      document.getElementById('sqlOutput').value = sql;
+      persistCurrent();
+      document.getElementById('sqlStatus').innerHTML = `<div class="status ${score >= 6 ? 'ok' : 'warn'}">SQL generated from the scenario pattern. Edit it further if you want to improve it.</div>`;
+      refreshThinkingScore();
+    }
+
+    function useStarterSql() {
+      const s = getScenario(state.currentScenarioId);
+      document.getElementById('sqlOutput').value = s.starterSql;
+      persistCurrent();
+      document.getElementById('sqlStatus').innerHTML = `<div class="status info">Starter SQL loaded.</div>`;
+    }
+
+    function compareExpert() {
+      const s = getScenario(state.currentScenarioId);
+      const userThinking = document.getElementById('thinkInput').value || '(No thinking written yet)';
+      document.getElementById('sqlStatus').innerHTML = `
+        <div class="panel-box purplebox">
+          <h4>Your Thinking</h4>
+          <pre>${escapeHtml(userThinking)}</pre>
+        </div>
+        <div class="panel-box info">
+          <h4>Expert Thinking</h4>
+          <pre>${escapeHtml(s.expertThinking)}</pre>
+        </div>`;
+    }
+
+    function showStepSql() {
+      const s = getScenario(state.currentScenarioId);
+      document.getElementById('sqlStatus').innerHTML = s.stepSql.map(step => `
+        <div class="step-box">
+          <div class="step-title">${step[0]}</div>
+          <code>${escapeHtml(step[1])}</code>
+        </div>`).join('');
+    }
+
+    function testSql() {
+      const s = getScenario(state.currentScenarioId);
+      const sql = document.getElementById('sqlOutput').value;
+      const checks = s.validateSql(sql);
+      const passed = checks.filter(c => c.pass).length;
+      const p = getScenarioProgress(s.id);
+      p.completed = passed === checks.length;
+      p.lastValidation = Date.now();
+      persistCurrent();
+      saveProgress();
+      document.getElementById('sqlStatus').innerHTML = `
+        <div class="status ${passed === checks.length ? 'ok' : passed >= 5 ? 'warn' : 'bad'}">
+          ${passed === checks.length ? 'Correct logic. This SQL satisfies the full scenario test.' : passed >= 5 ? 'Partially correct. Main logic is there, but some conditions are still missing.' : 'Not correct yet. Refine the SQL logic and test again.'}
+        </div>
+        <table>
+          <thead><tr><th>Check</th><th>Status</th></tr></thead>
+          <tbody>${checks.map(c => `<tr><td>${c.name}</td><td>${c.pass ? '✅' : '❌'}</td></tr>`).join('')}</tbody>
+        </table>`;
+      renderHome();
+      renderProgress();
+    }
+
+    function refreshThinkingScore(customHtml) {
+      const s = getScenario(state.currentScenarioId);
+      const text = document.getElementById('thinkInput').value;
+      const score = scoreThinking(s, text);
+      const p = getScenarioProgress(s.id);
+      p.thinking = text;
+      p.bestScore = Math.max(p.bestScore || 0, score.total);
+      saveProgress();
+      const scoreWrap = document.querySelector('#practiceScreen .score-wrap');
+      if (scoreWrap) {
+        const newScoreHtml = `
+          <div class="score-ring" id="scoreRing" style="background:${score.ring};"><div class="score-text">${score.total}/10<span>Thinking</span></div></div>
+          <div>
+            <div class="score-chips">${score.labels.map(x => `<span class="score-chip ${x.pass ? 'good' : 'bad'}">${x.pass ? '✓' : '✗'} ${x.label}</span>`).join('')}</div>
+            <div class="status ${score.total >= 8 ? 'ok' : score.total >= 5 ? 'warn' : 'bad'}">${score.message}</div>
+          </div>`;
+        scoreWrap.innerHTML = newScoreHtml;
+      }
+      const box = document.getElementById('thinkStatus');
+      if (box) box.innerHTML = customHtml || score.statusHtml;
+    }
+
+    function resetApp() {
+      if (!confirm('Reset all saved progress on this device?')) return;
+      localStorage.removeItem('thinkQueryProgress');
+      state.progress = {};
+      renderHome();
+      renderPractice();
+      renderProgress();
+    }
+
+    function truncate(s, n) {
+      return s.length > n ? s.slice(0,n-1) + '…' : s;
+    }
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    function escapeJs(str) {
+      return String(str).replace(/'/g, "\\'");
+    }
+    function formatInlineKbd(text) {
+      return escapeHtml(text)
+        .replace(/account_id/g, '<span class="kbd">account_id</span>')
+        .replace(/customer_name/g, '<span class="kbd">customer_name</span>')
+        .replace(/account_type/g, '<span class="kbd">account_type</span>')
+        .replace(/last_transaction_date/g, '<span class="kbd">last_transaction_date</span>')
+        .replace(/patient_id/g, '<span class="kbd">patient_id</span>')
+        .replace(/patient_name/g, '<span class="kbd">patient_name</span>')
+        .replace(/department/g, '<span class="kbd">department</span>')
+        .replace(/last_visit_date/g, '<span class="kbd">last_visit_date</span>')
+        .replace(/policy_id/g, '<span class="kbd">policy_id</span>')
+        .replace(/annual_premium/g, '<span class="kbd">annual_premium</span>')
+        .replace(/claim_ratio/g, '<span class="kbd">claim_ratio</span>')
+        .replace(/total_approved_claim/g, '<span class="kbd">total_approved_claim</span>')
+        .replace(/active_months/g, '<span class="kbd">active_months</span>')
+        .replace(/total_spend/g, '<span class="kbd">total_spend</span>');
+    }
+
+    document.addEventListener('input', function(e) {
+      if (e.target && e.target.id === 'thinkInput') refreshThinkingScore();
+      if (e.target && e.target.id === 'sqlOutput') persistCurrent();
+    });
+
+    renderHome();
+    renderPractice();
+    renderProgress();
+  
+function closeOnboarding(){localStorage.setItem('crack_sql_onboard_seen','1');var o=document.getElementById('onboarding');if(o)o.classList.remove('show');}
+setTimeout(function(){var s=document.getElementById('splashScreen'); if(s) s.classList.add('hide');},900);
+setTimeout(function(){var o=document.getElementById('onboarding'); if(o && !localStorage.getItem('crack_sql_onboard_seen')) o.classList.add('show');},1150);
+</script>
+<button class="fab-practice" onclick="nav('practice')">▶</button>
+</body>
+</html>
