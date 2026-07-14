@@ -3,7 +3,39 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Crack SQL V1</title>
+<title>Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer</title>
+<meta name="description" content="Practice 240 real-world SQL scenarios across Banking, Healthcare, Insurance & Retail. Write your thinking first, get scored, then generate and run SQL instantly in DB Fiddle." />
+<meta name="theme-color" content="#2563eb" />
+<link rel="canonical" href="https://thinkandcracksql.netlify.app/" />
+
+<!-- Favicon (inline SVG, no extra file needed) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='40' font-family='Arial,Helvetica,sans-serif' font-size='22' font-weight='900' fill='white' text-anchor='middle'%3ESQL%3C/text%3E%3C/svg%3E" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://thinkandcracksql.netlify.app/" />
+<meta property="og:title" content="Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer" />
+<meta property="og:description" content="240 real-world SQL scenarios across 4 domains and 3 difficulty levels. Think first, write pseudo logic, then generate & run SQL in DB Fiddle." />
+<meta property="og:image" content="https://thinkandcracksql.netlify.app/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer" />
+<meta name="twitter:description" content="Practice SQL the right way: think, write pseudo-logic, then generate & run SQL across Banking, Healthcare, Insurance & Retail scenarios." />
+<meta name="twitter:image" content="https://thinkandcracksql.netlify.app/og-image.png" />
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Crack SQL" />
+
+<!-- Supabase (accounts + progress sync) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
 <style>
 :root {
   --bg:#f5f7fb;
@@ -164,6 +196,131 @@ h2 {
   color:#334155;
   white-space:pre-wrap;
 }
+.schema-cards { display:flex; flex-direction:column; gap:10px; }
+.schema-card {
+  background:#f8fafc;
+  border:1px solid var(--line);
+  border-radius:14px;
+  overflow:hidden;
+}
+.schema-card-head {
+  background:#0f172a;
+  color:#fff;
+  font-weight:900;
+  font-size:13px;
+  padding:9px 12px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.schema-card-head .tbl-icon { font-size:13px; }
+.schema-card-body { padding:6px 0; }
+.schema-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:7px 12px;
+  font-size:13px;
+  border-top:1px solid #eef2f7;
+}
+.schema-row:first-child { border-top:none; }
+.schema-col-name {
+  font:12.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:#1e293b;
+}
+.schema-badges { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.badge-pk, .badge-fk {
+  font-size:10px;
+  font-weight:900;
+  border-radius:999px;
+  padding:3px 7px;
+  letter-spacing:.3px;
+}
+.badge-pk { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+.badge-fk { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
+.fk-ref { font-size:10.5px; color:#64748b; white-space:nowrap; }
+
+.progress-card {
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:15px 16px;
+  margin-bottom:18px;
+  box-shadow:0 7px 20px rgba(15,23,42,.04);
+}
+.progress-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+.progress-label { font-size:12px; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+.progress-count { font-size:13px; font-weight:900; color:var(--primary); }
+.progress-track { background:#e2e8f0; border-radius:999px; height:8px; overflow:hidden; }
+.progress-fill { background:linear-gradient(90deg,var(--primary),var(--good)); height:100%; border-radius:999px; transition:width .3s ease; }
+.progress-reset { border:none; background:transparent; color:var(--muted); font-size:11px; margin-top:8px; cursor:pointer; text-decoration:underline; padding:0; }
+
+.done-tag {
+  background:#dcfce7;
+  color:#166534;
+  border:1px solid #bbf7d0;
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+  display:none;
+}
+.done-tag.show { display:inline-block; }
+
+.auth-card {
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:13px 14px;
+  margin-bottom:14px;
+  box-shadow:0 7px 20px rgba(15,23,42,.04);
+}
+.auth-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.auth-row input[type="email"] {
+  flex:1;
+  min-width:150px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:14px;
+  outline:none;
+}
+.auth-row input[type="email"]:focus { border-color:var(--primary); }
+.auth-row button.action { width:auto; }
+
+.install-banner {
+  display:none;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  background:#0f172a;
+  color:#fff;
+  border-radius:16px;
+  padding:12px 14px;
+  margin-bottom:14px;
+}
+.install-banner.show { display:flex; }
+.install-banner .txt { font-size:13px; line-height:1.4; }
+.install-banner button {
+  border:none;
+  background:var(--primary);
+  color:#fff;
+  font-weight:900;
+  font-size:12.5px;
+  padding:9px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.ios-hint {
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+  margin-bottom:14px;
+  line-height:1.5;
+}
 textarea {
   width:100%;
   min-height:150px;
@@ -266,6 +423,23 @@ pre {
     <div class="version">V1</div>
   </div>
 
+  <div class="install-banner" id="installBanner">
+    <div class="txt">📲 Install Crack SQL as an app for quick access & offline practice.</div>
+    <button onclick="installApp()">Install</button>
+  </div>
+  <div class="ios-hint" id="iosHint" style="display:none">On iPhone: tap the Share icon, then "Add to Home Screen" to install.</div>
+
+  <div class="auth-card" id="authBox"></div>
+
+  <div class="progress-card">
+    <div class="progress-top">
+      <div class="progress-label">Your Progress</div>
+      <div class="progress-count" id="progressCount">0 / 240</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <button class="progress-reset" onclick="resetProgress()">Reset progress</button>
+  </div>
+
   <div class="label">Choose Domain</div>
   <div class="grid">
     <div class="pick domain" onclick="selectDomain('Banking',this)"><div class="icon">🏦</div><div class="pick-title">Banking</div><div class="pick-note">Accounts & transactions</div></div>
@@ -296,14 +470,17 @@ pre {
         <h2 id="title"></h2>
         <div class="problem" id="question"></div>
       </div>
-      <div class="qno" id="qno"></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <div class="qno" id="qno"></div>
+        <div class="done-tag" id="doneTag">✓ Done</div>
+      </div>
     </div>
     <div class="tags" id="tags"></div>
   </div>
 
   <div class="card">
     <div class="label" style="margin-top:0">Schema</div>
-    <div class="schema-text" id="schema"></div>
+    <div class="schema-cards" id="schema"></div>
   </div>
 
   <div class="card">
@@ -344,6 +521,210 @@ let selectedDomain = null;
 let selectedLevel = null;
 let current = null;
 let lastId = null;
+let currentUser = null;
+
+// ---------------------------------------------------------------
+// SUPABASE CONFIG — replace with your project's values.
+// Find these in: Supabase Dashboard -> Project Settings -> API
+// Until filled in, the app runs fully in local/offline (guest) mode.
+// ---------------------------------------------------------------
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+const supabaseClient = (typeof supabase !== 'undefined' && SUPABASE_URL.startsWith('http'))
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+const PROGRESS_KEY = 'crackSqlProgress';
+
+function getProgress() {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveProgress(list) {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(list)); } catch (e) { /* storage unavailable */ }
+}
+
+function isComplete(id) {
+  return getProgress().includes(id);
+}
+
+function markComplete(id) {
+  const list = getProgress();
+  if (!list.includes(id)) {
+    list.push(id);
+    saveProgress(list);
+  }
+  updateProgressUI();
+  if (supabaseClient && currentUser) {
+    supabaseClient.from('progress')
+      .upsert([{ user_id: currentUser.id, scenario_id: id }], { onConflict: 'user_id,scenario_id' })
+      .then(({ error }) => { if (error) console.error('progress sync failed', error); });
+  }
+}
+
+async function resetProgress() {
+  if (!confirm('Reset all progress? This clears your completed scenario history.')) return;
+  saveProgress([]);
+  updateProgressUI();
+  updateDoneTag();
+  if (supabaseClient && currentUser) {
+    const { error } = await supabaseClient.from('progress').delete().eq('user_id', currentUser.id);
+    if (error) console.error('cloud reset failed', error);
+  }
+}
+
+// ---------------- Auth (Supabase magic link) ----------------
+
+async function initAuth() {
+  renderAuthUI();
+  if (!supabaseClient) return;
+
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  currentUser = session ? session.user : null;
+  renderAuthUI();
+  if (currentUser) await syncProgressFromCloud();
+
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session ? session.user : null;
+    renderAuthUI();
+    if (currentUser) await syncProgressFromCloud();
+  });
+}
+
+async function signInWithEmail() {
+  if (!supabaseClient) return;
+  const emailEl = document.getElementById('authEmail');
+  const email = emailEl ? emailEl.value.trim() : '';
+  if (!email) { alert('Enter your email first.'); return; }
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.href },
+  });
+  if (error) alert('Sign-in failed: ' + error.message);
+  else alert('Check your email for a magic sign-in link.');
+}
+
+async function signOut() {
+  if (!supabaseClient) return;
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  renderAuthUI();
+}
+
+function renderAuthUI() {
+  const box = document.getElementById('authBox');
+  if (!box) return;
+
+  if (!supabaseClient) {
+    box.innerHTML = '<div class="small">Progress is saved on this device only.</div>';
+    return;
+  }
+
+  if (currentUser) {
+    box.innerHTML =
+      '<div class="auth-row"><span class="small">Signed in as <b>' + escapeHtml(currentUser.email) + '</b></span>' +
+      '<button class="linkbtn" onclick="signOut()">Sign out</button></div>';
+  } else {
+    box.innerHTML =
+      '<div class="auth-row">' +
+      '<input id="authEmail" type="email" placeholder="you@email.com" />' +
+      '<button class="action primary" onclick="signInWithEmail()">Sign in</button>' +
+      '</div><div class="small" style="margin-top:6px;">Sign in to sync progress across devices.</div>';
+  }
+}
+
+async function syncProgressFromCloud() {
+  if (!supabaseClient || !currentUser) return;
+
+  const { data, error } = await supabaseClient
+    .from('progress')
+    .select('scenario_id')
+    .eq('user_id', currentUser.id);
+
+  if (error) { console.error('cloud fetch failed', error); return; }
+
+  const cloudIds = data.map(r => r.scenario_id);
+  const localIds = getProgress();
+  const merged = [...new Set([...cloudIds, ...localIds])];
+  saveProgress(merged);
+  updateProgressUI();
+  updateDoneTag();
+
+  // Push any locally-completed scenarios the cloud doesn't know about yet
+  const toPush = localIds.filter(id => !cloudIds.includes(id));
+  if (toPush.length) {
+    await supabaseClient.from('progress').upsert(
+      toPush.map(id => ({ user_id: currentUser.id, scenario_id: id })),
+      { onConflict: 'user_id,scenario_id' }
+    );
+  }
+
+  await supabaseClient.from('profiles')
+    .update({ last_active: new Date().toISOString() })
+    .eq('id', currentUser.id);
+}
+
+// ---------------- PWA install ----------------
+
+let deferredInstallPrompt = null;
+
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.classList.add('show');
+});
+
+async function installApp() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.classList.remove('show');
+}
+
+window.addEventListener('appinstalled', () => {
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.classList.remove('show');
+});
+
+if (isIOS() && !window.navigator.standalone) {
+  const hint = document.getElementById('iosHint');
+  if (hint) hint.style.display = 'block';
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW registration failed', err));
+  });
+}
+
+function updateProgressUI() {
+  const total = SCENARIOS.length;
+  const done = getProgress().length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const countEl = document.getElementById('progressCount');
+  const fillEl = document.getElementById('progressFill');
+  if (countEl) countEl.innerText = done + ' / ' + total;
+  if (fillEl) fillEl.style.width = pct + '%';
+}
+
+function updateDoneTag() {
+  const tag = document.getElementById('doneTag');
+  if (!tag || !current) return;
+  tag.classList.toggle('show', isComplete(current.id));
+}
 
 function selectDomain(domain, el) {
   selectedDomain = domain;
@@ -382,6 +763,76 @@ function loadScenario() {
   renderScenario();
 }
 
+function pluralize(base) {
+  if (/[^aeiou]y$/i.test(base)) return base.slice(0, -1) + 'ies';
+  if (/(s|x|z|ch|sh)$/i.test(base)) return base + 'es';
+  return base + 's';
+}
+
+function parseSchema(schemaText) {
+  if (!schemaText) return [];
+  const tableChunks = schemaText.split(';').map(s => s.trim()).filter(Boolean);
+  const tables = [];
+  tableChunks.forEach(chunk => {
+    const m = chunk.match(/^(\w+)\((.*)\)$/);
+    if (!m) return;
+    const name = m[1];
+    const cols = m[2].split(',').map(c => c.trim()).filter(Boolean).map(colDef => {
+      const parts = colDef.split(/\s+/);
+      let key = null;
+      if (parts[parts.length - 1] === 'PK') { key = 'PK'; parts.pop(); }
+      else if (parts[parts.length - 1] === 'FK') { key = 'FK'; parts.pop(); }
+      return { name: parts.join(' '), key };
+    });
+    tables.push({ name, columns: cols });
+  });
+  return tables;
+}
+
+function inferReference(colName, tableNames, currentTable) {
+  if (!colName.endsWith('_id')) return null;
+  const base = colName.slice(0, -3);
+  const guess = pluralize(base);
+  const candidates = [guess, base, base + 's'];
+  for (const c of candidates) {
+    if (tableNames.includes(c) && c !== currentTable) return c;
+  }
+  return null;
+}
+
+const TABLE_ICONS = { customers: '👤', accounts: '🏦', transactions: '💳', patients: '🧑‍⚕️', doctors: '🩺', appointments: '📅', visits: '📋', policies: '📄', claims: '🧾', products: '📦', orders: '🧺', order_items: '🧾' };
+
+function renderSchemaCards(schemaText) {
+  const container = document.getElementById('schema');
+  const tables = parseSchema(schemaText);
+
+  if (!tables.length) {
+    container.innerHTML = '<div class="schema-text">' + escapeHtml(schemaText) + '</div>';
+    return;
+  }
+
+  const tableNames = tables.map(t => t.name);
+  container.innerHTML = tables.map(t => {
+    const rows = t.columns.map(c => {
+      let badges = '';
+      let ref = '';
+      if (c.key === 'PK') badges += '<span class="badge-pk">PK</span>';
+      if (c.key === 'FK') {
+        badges += '<span class="badge-fk">FK</span>';
+        const target = inferReference(c.name, tableNames, t.name);
+        if (target) ref = '<span class="fk-ref">→ ' + escapeHtml(target) + '</span>';
+      }
+      return '<div class="schema-row"><span class="schema-col-name">' + escapeHtml(c.name) + '</span>' +
+        '<span class="schema-badges">' + ref + badges + '</span></div>';
+    }).join('');
+    const icon = TABLE_ICONS[t.name] || '🗂️';
+    return '<div class="schema-card">' +
+      '<div class="schema-card-head"><span class="tbl-icon">' + icon + '</span>' + escapeHtml(t.name) + '</div>' +
+      '<div class="schema-card-body">' + rows + '</div>' +
+      '</div>';
+  }).join('');
+}
+
 function renderScenario() {
   document.getElementById('home').classList.remove('active');
   document.getElementById('practice').classList.add('active');
@@ -390,10 +841,11 @@ function renderScenario() {
   document.getElementById('title').innerText = current.id;
   document.getElementById('question').innerText = current.question;
   document.getElementById('qno').innerText = 'Q' + current.questionNo;
-  document.getElementById('schema').innerText = current.schemaText;
+  renderSchemaCards(current.schemaText);
   document.getElementById('tags').innerHTML = current.keywords.map(k => '<span class="tag">' + escapeHtml(k.toUpperCase()) + '</span>').join('');
   document.getElementById('thinking').value = '';
   document.getElementById('feedback').classList.remove('active');
+  updateDoneTag();
 }
 
 function nextScenario() {
@@ -416,41 +868,90 @@ function generateSql() {
   document.getElementById('feedback').classList.add('active');
   document.getElementById('score').innerText = 'Thinking Score: ' + result.score + '/10';
 
-  if (result.missing.length) {
-    document.getElementById('improve').innerHTML = '<b>Improve your thinking:</b><br>' +
-      'You can add: ' + result.missing.map(x => '<span>' + escapeHtml(x) + '</span>').join(', ');
-  } else {
-    document.getElementById('improve').innerHTML = '<b>Improve your thinking:</b><br>Excellent. Your thinking covers the expected logic.';
+  let improveHtml = '';
+  if (result.matched.length) {
+    improveHtml += '<b>You covered:</b><br>' +
+      result.matched.map(x => '<span>✓ ' + escapeHtml(x) + '</span>').join(', ') + '<br><br>';
   }
+  if (result.missing.length) {
+    improveHtml += '<b>Improve your thinking:</b><br>' +
+      result.missing.map(x => '<span>' + escapeHtml(x) + '</span>').join(', ');
+  } else {
+    improveHtml += '<b>Excellent.</b> Your thinking covers the expected logic.';
+  }
+  document.getElementById('improve').innerHTML = improveHtml;
 
   document.getElementById('pseudo').innerHTML = '<b>Suggested pseudo logic:</b><br>' + escapeHtml(current.pseudo);
   document.getElementById('sql').innerText = current.sql;
+
+  markComplete(current.id);
+  updateDoneTag();
+}
+
+// Human-friendly descriptions for raw SQL keywords, used in feedback
+const KEYWORD_LABELS = {
+  'select': 'a SELECT of the right columns',
+  'where': 'a WHERE filter condition',
+  'order by': 'sorting with ORDER BY',
+  'group by': 'grouping with GROUP BY',
+  'having': 'a HAVING filter on the grouped result',
+  'join': 'a JOIN between tables',
+  'distinct': 'removing duplicates with DISTINCT',
+  'count': 'a COUNT aggregation',
+  'sum': 'a SUM aggregation',
+  'avg': 'an AVG aggregation',
+  'max': 'a MAX aggregation',
+  'min': 'a MIN aggregation',
+  'case': 'conditional logic with CASE WHEN',
+  'limit': 'restricting rows with LIMIT/TOP',
+  'like': 'pattern matching with LIKE',
+  'between': 'a BETWEEN range filter',
+  'null': 'a NULL check',
+  'rank': 'a RANK() window function',
+  'row_number': 'a ROW_NUMBER() window function',
+  'partition by': 'partitioning with PARTITION BY',
+};
+
+function wordBoundaryMatch(text, phrase) {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = /\s/.test(phrase) ? escaped : '\\b' + escaped + '\\b';
+  return new RegExp(pattern, 'i').test(text);
 }
 
 function scoreThinking(text) {
   let score = 0;
   const missing = [];
+  const matched = [];
 
   if (text.length >= 30) score += 2;
-  else missing.push('write more complete steps');
+  else missing.push('write more complete steps (aim for 1-2 full sentences)');
 
   current.keywords.forEach(k => {
-    if (text.includes(k.toLowerCase())) score += 1;
-    else missing.push(k);
+    const label = KEYWORD_LABELS[k.toLowerCase()] || k;
+    if (wordBoundaryMatch(text, k)) {
+      score += 1;
+      matched.push(label);
+    } else {
+      missing.push(label);
+    }
   });
 
   const logicChecks = [
-    {name:'table/base table', words:['from','table','start']},
-    {name:'filter condition', words:['where','filter','condition']},
-    {name:'join logic', words:['join','combine','link']},
-    {name:'grouping/aggregation', words:['group','sum','count','avg','max','min']}
+    { name: 'naming the starting table', words: ['from', 'table', 'start'] },
+    { name: 'a filter condition', words: ['where', 'filter', 'condition'] },
+    { name: 'combining/joining tables', words: ['join', 'combine', 'link'] },
+    { name: 'grouping or aggregation', words: ['group', 'sum', 'count', 'avg', 'max', 'min'] },
   ];
 
   logicChecks.forEach(c => {
-    if (c.words.some(w => text.includes(w))) score += 1;
+    if (c.words.some(w => wordBoundaryMatch(text, w))) score += 1;
   });
 
-  return { score: Math.min(score, 10), missing: [...new Set(missing)].slice(0,6) };
+  return {
+    score: Math.min(score, 10),
+    missing: [...new Set(missing)].slice(0, 6),
+    matched: [...new Set(matched)].slice(0, 6),
+  };
 }
 
 function sqlPack() {
@@ -486,6 +987,9 @@ function escapeHtml(str) {
     .replaceAll('"','&quot;')
     .replaceAll("'","&#039;");
 }
+
+updateProgressUI();
+initAuth();
 </script>
 </body>
 </html>
