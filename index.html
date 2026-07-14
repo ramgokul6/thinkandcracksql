@@ -528,8 +528,8 @@ let currentUser = null;
 // Find these in: Supabase Dashboard -> Project Settings -> API
 // Until filled in, the app runs fully in local/offline (guest) mode.
 // ---------------------------------------------------------------
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://kagvkyyehlvkcpqxmwpg.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_3SEGnFL_C1sQ9RlFKp7Z9w_3H9oCI_5';
 
 const supabaseClient = (typeof supabase !== 'undefined' && SUPABASE_URL.startsWith('http'))
   ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
