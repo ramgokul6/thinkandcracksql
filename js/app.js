@@ -199,7 +199,7 @@ async function signOut() {
 }
 async function initAuth() {
   try {
-    client=window.supabase?.createClient('https://kagvkyyehlvkcpqxmwpg.supabase.co','sb_publishable_3SEGnFL_C1sQ9RlFKp7Z9w_3H9oCI_5')||null;
+    client=window.supabase?.createClient('https://qklnaqfspvmnlequqagf.supabase.co','sb_publishable_dthVX8zmvd1HvWaYWBaojA_2YbvHWe1')||null;
     renderAuth();if(!client)return;
     // Register first, and do database work only after the auth callback returns.
     let authEventSeen=false;
