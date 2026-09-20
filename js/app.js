@@ -7,6 +7,7 @@ import {escapeHtml} from './util.js';
 const $ = id => document.getElementById(id);
 let data, scenarios=[], ids=new Set(), state=EMPTY(), current=null, user=null;
 let selectedDomain=null, selectedLevel=null, client=null, deferredPrompt=null, syncTimer=null;
+let authNotice='';
 let storage;
 try { storage=window.localStorage; } catch { storage={getItem(){return null;},setItem(){throw Error('Storage unavailable');}}; }
 const labels={not_started:'Not started',thinking:'Thinking in progress',answer_viewed:'Earlier answer viewed — thinking not assessed',thinking_ready:'Thinking ready',sql_written:'SQL draft saved',fiddle_opened:'DB Fiddle opened — results not verified',practiced:'Practiced — self-reported'};
@@ -175,23 +176,38 @@ async function importCloudHistory() {
 function retrySync() {if(user&&client)cloud.request();else $('syncStatus').textContent='Sign in to sync. Guest practice is saved only on this device.';}
 function renderAuth() {
   $('authBox').innerHTML=user?'<div class="auth-row"><span>Signed in as '+escapeHtml(user.email||'learner')+'</span><button class="linkbtn" onclick="signOut()">Sign out</button></div>':
-    client?'<label for="authEmail">Email for a sign-in link</label><div class="auth-row"><input id="authEmail" type="email" placeholder="you@email.com"><button class="action primary" onclick="signInWithEmail()">Sign in</button></div>':'Guest mode: accounts are unavailable. You can still practise on this device.';
+    client?'<div class="auth-row"><button id="googleSignIn" class="action primary" onclick="signInWithGoogle()">Continue with Google</button></div><p class="small">Sign in to sync your progress, or choose a domain below to practise as a guest.</p><p id="authMessage" role="status" aria-live="polite"></p>':'Guest mode: accounts are unavailable. You can still practise on this device.';
+  if($('authMessage'))$('authMessage').textContent=authNotice;
   $('importGuest').hidden=!user;
   $('importCloud').hidden=!user;
 }
 function setSession(session) {
   const next=session?.user||null;
+  if(next)authNotice='';
   if(user?.id===next?.id) {renderAuth();return;}
   clearTimeout(syncTimer);cloud.changeSession();user=next;state=readProgress(storage,user?.id,ids);
   renderAuth();updateProgress();if(current)renderScenario();
   if(user)cloud.request();else $('syncStatus').textContent='Guest profile. Signed-in progress stays separate.';
 }
-async function signInWithEmail() {
-  const email=$('authEmail')?.value.trim();if(!email||!$('authEmail').checkValidity()){alert('Enter a valid email address.');return;}
+async function signInWithGoogle() {
+  const button=$('googleSignIn'),message=$('authMessage');
+  if(!client || !button || button.disabled)return;
+  button.disabled=true;button.textContent='Connecting to Google…';
+  authNotice='';if(message)message.textContent='';
   try {
-    const {error}=await client.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
-    alert(error?'Sign-in failed: '+error.message:'Check your email for a sign-in link.');
-  } catch {alert('Sign-in is unavailable. Your guest progress remains on this device.');}
+    const {error}=await client.auth.signInWithOAuth({
+      provider:'google',
+      options:{
+        redirectTo:location.origin+location.pathname,
+        queryParams:{prompt:'select_account'}
+      }
+    });
+    if(error)throw error;
+  } catch {
+    button.disabled=false;button.textContent='Continue with Google';
+    authNotice='Google sign-in could not start. Please retry. If it keeps failing, check the Google provider and allowed redirect URLs in Supabase. Your guest progress is saved.';
+    if(message)message.textContent=authNotice;
+  }
 }
 async function signOut() {
   try {const {error}=await client.auth.signOut();if(error)throw error;setSession(null);}
@@ -201,6 +217,13 @@ async function initAuth() {
   try {
     client=window.supabase?.createClient('https://qklnaqfspvmnlequqagf.supabase.co','sb_publishable_dthVX8zmvd1HvWaYWBaojA_2YbvHWe1')||null;
     renderAuth();if(!client)return;
+    const callback=new URLSearchParams(location.hash.slice(1));
+    if(callback.has('error')||callback.has('error_description')) {
+      const message=$('authMessage');
+      authNotice='Google sign-in was cancelled or unsuccessful. Please try again.';
+      if(message)message.textContent=authNotice;
+      history.replaceState(null,'',location.pathname+location.search);
+    }
     // Register first, and do database work only after the auth callback returns.
     let authEventSeen=false;
     client.auth.onAuthStateChange((_event,session)=>{authEventSeen=true;setTimeout(()=>setSession(session),0);});
@@ -220,7 +243,7 @@ window.addEventListener('storage',event=>{
   if(JSON.stringify(merged)===JSON.stringify(state))return;
   state=merged;updateProgress();if(current)renderScenario();
 });
-Object.assign(window,{selectDomain,selectLevel,evaluatePlan,nextScenario,goHome,copySetup,copyQuery,runDbFiddle,finishPractice,resetProgress,importOldHistory,importGuestProgress,importCloudHistory,retrySync,signInWithEmail,signOut,installApp});
+Object.assign(window,{selectDomain,selectLevel,evaluatePlan,nextScenario,goHome,copySetup,copyQuery,runDbFiddle,finishPractice,resetProgress,importOldHistory,importGuestProgress,importCloudHistory,retrySync,signInWithGoogle,signOut,installApp});
 try {
   const response=await fetch('./data/scenarios.json');
   if(!response.ok)throw Error('Scenario download failed');
