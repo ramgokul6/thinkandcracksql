@@ -1,0 +1,66 @@
+import {thinkingIsReady} from './thinking.js';
+export const EMPTY = () => ({version:2, resetAt:0, entries:{}});
+export const storageKey = userId => 'crackSqlProgress:v2:' + (userId ? 'user:' + userId : 'guest');
+export function sanitize(value, ids) {
+  const result = EMPTY();
+  if (!value || value.version !== 2 || typeof value.entries !== 'object' || !value.entries || Array.isArray(value.entries)) return result;
+  result.resetAt = Number.isFinite(value.resetAt) ? Math.max(0,value.resetAt) : 0;
+  for (const [id,entry] of Object.entries(value.entries)) {
+    if (!ids.has(id) || !entry || typeof entry !== 'object' || !Number.isFinite(entry.updatedAt) || entry.updatedAt <= result.resetAt) continue;
+    const thinking = {};
+    for (const k of ['goal','sources','steps','check']) thinking[k] = String(entry.thinking?.[k] || '').slice(0,4000);
+    result.entries[id] = {thinking, sql:String(entry.sql || '').slice(0,20000),
+      assessment: entry.assessment && typeof entry.assessment === 'object' ? entry.assessment : null,
+      fiddleFingerprint: typeof entry.fiddleFingerprint === 'string' ? entry.fiddleFingerprint : null,
+      practiceFingerprint: typeof entry.practiceFingerprint === 'string' ? entry.practiceFingerprint : null,
+      validationNotes:String(entry.validationNotes || '').slice(0,4000),
+      answerViewed:!!entry.answerViewed, legacyViewed:!!entry.legacyViewed,
+      updatedAt:entry.updatedAt};
+  }
+  return result;
+}
+export function readProgress(storage, userId, ids) {
+  try { return sanitize(JSON.parse(storage.getItem(storageKey(userId))), ids); }
+  catch { return EMPTY(); }
+}
+export function saveProgress(storage,userId,state) {
+  try { storage.setItem(storageKey(userId),JSON.stringify(state)); return true; }
+  catch { return false; }
+}
+export function mergeProgress(a,b,ids) {
+  a=sanitize(a,ids); b=sanitize(b,ids);
+  const result=EMPTY(); result.resetAt=Math.max(a.resetAt,b.resetAt);
+  for(const id of ids) {
+    const x=a.entries[id],y=b.entries[id];
+    const e=!x?y:!y?x:x.updatedAt>y.updatedAt?x:y;
+    if(e && e.updatedAt>result.resetAt) result.entries[id]=e;
+  }
+  return result;
+}
+export function nextTimestamp(state, now=Date.now()) {
+  return Math.max(now,state.resetAt+1,...Object.values(state.entries).map(e=>e.updatedAt+1));
+}
+export function workFingerprint(entry) {
+  return JSON.stringify([entry.assessment?.fingerprint || '',String(entry.sql || '').trim()]);
+}
+export function stage(scenario,entry) {
+  if(!entry) return 'not_started';
+  if(!thinkingIsReady(scenario,entry)) return entry.legacyViewed?'answer_viewed':'thinking';
+  if(!String(entry.sql||'').trim()) return 'thinking_ready';
+  if(entry.practiceFingerprint===workFingerprint(entry) && entry.validationNotes?.trim()) return 'practiced';
+  if(entry.fiddleFingerprint===workFingerprint(entry)) return 'fiddle_opened';
+  return 'sql_written';
+}
+export function chooseNext(pool,state,currentId) {
+  return pool.find(s=>s.id!==currentId && stage(s,state.entries[s.id])!=='practiced')
+    || pool.find(s=>s.id===currentId && stage(s,state.entries[s.id])!=='practiced') || null;
+}
+export function importLegacy(idsFromOldStorage,state,aliases,ids,now=Date.now()) {
+  const next=structuredClone(state);let timestamp=nextTimestamp(next,now);
+  for(const oldId of Array.isArray(idsFromOldStorage)?idsFromOldStorage:[]) {
+    const id=aliases[oldId];
+    if(!ids.has(id) || next.entries[id]) continue;
+    next.entries[id]={thinking:{},sql:'',legacyViewed:true,answerViewed:true,updatedAt:timestamp++};
+  }
+  return sanitize(next,ids);
+}
