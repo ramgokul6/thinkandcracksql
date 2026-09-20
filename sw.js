@@ -1,53 +1,24 @@
-// Crack SQL — Service Worker
-// Cache-first for the app shell, so the 240 embedded scenarios work fully offline
-// once the app has been opened at least once.
-
-const CACHE_NAME = 'crack-sql-v1';
-const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
-      .catch((err) => console.error('SW install cache failed', err))
-  );
-  self.skipWaiting();
+const CACHE='crack-sql-thinking-v2';
+const ROOT=new URL('./',self.location).href;
+const SHELL=['index.html','manifest.json','icon-512.png','icon-maskable-512.png','apple-touch-icon.png',
+'data/scenarios.json','js/app.js','js/thinking.js','js/progress.js','js/cloud.js','js/schema.js','js/util.js'].map(p=>new URL(p,ROOT).href);
+self.addEventListener('install',event=>{
+  // Fail installation as a unit if an asset is absent. Keep the last working version.
+  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));
 });
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
+self.addEventListener('activate',event=>{
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('crack-sql-')&&k!==CACHE).map(k=>caches.delete(k)))));
 });
-
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-
-  // Never intercept cross-origin calls (e.g. Supabase auth/API) — always go to network.
-  if (!req.url.startsWith(self.location.origin)) return;
-
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
-        .then((res) => {
-          if (res && res.status === 200) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
-          }
-          return res;
-        })
-        .catch(() => cached);
-    })
-  );
+self.addEventListener('fetch',event=>{
+  const req=event.request,url=new URL(req.url);
+  if(req.method!=='GET'||url.origin!==self.location.origin)return;
+  const isNavigation=req.mode==='navigate';
+  if(!isNavigation&&!SHELL.includes(url.href))return;
+  event.respondWith((async()=>{
+    const cache=await caches.open(CACHE);
+    // Shell and scenario data are versioned together. Bump CACHE with every release.
+    const cached=await cache.match(isNavigation?new URL('index.html',ROOT).href:req);
+    if(cached)return cached;
+    return fetch(req);
+  })());
 });

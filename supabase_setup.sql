@@ -78,3 +78,4 @@ create policy "Users can delete own progress"
 
 -- Average scenarios completed per user
 -- select avg(cnt) from (select user_id, count(*) cnt from public.progress group by user_id) t;
+
