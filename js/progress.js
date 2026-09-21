@@ -7,12 +7,16 @@ export function sanitize(value, ids) {
   result.resetAt = Number.isFinite(value.resetAt) ? Math.max(0,value.resetAt) : 0;
   for (const [id,entry] of Object.entries(value.entries)) {
     if (!ids.has(id) || !entry || typeof entry !== 'object' || !Number.isFinite(entry.updatedAt) || entry.updatedAt <= result.resetAt) continue;
-    const thinking = {};
-    for (const k of ['goal','sources','steps','check']) thinking[k] = String(entry.thinking?.[k] || '').slice(0,4000);
+    const thinking = {response:String(entry.thinking?.response||'').slice(0,8000)};
+    // Keep earlier four-box answers readable after upgrading to the single-box UI.
+    for(const k of ['goal','sources','steps','check'])thinking[k]=String(entry.thinking?.[k]||'').slice(0,4000);
     result.entries[id] = {thinking, sql:String(entry.sql || '').slice(0,20000),
       assessment: entry.assessment && typeof entry.assessment === 'object' ? entry.assessment : null,
       fiddleFingerprint: typeof entry.fiddleFingerprint === 'string' ? entry.fiddleFingerprint : null,
-      practiceFingerprint: typeof entry.practiceFingerprint === 'string' ? entry.practiceFingerprint : null,
+      evaluationFingerprint: typeof entry.evaluationFingerprint === 'string' ? entry.evaluationFingerprint : null,
+      evaluationResult: entry.evaluationResult && typeof entry.evaluationResult === 'object' ? entry.evaluationResult : null,
+      evaluationAt: Number.isFinite(entry.evaluationAt) ? entry.evaluationAt : null,
+      attempts: Number.isFinite(entry.attempts) ? Math.max(0,Math.floor(entry.attempts)) : 0,
       validationNotes:String(entry.validationNotes || '').slice(0,4000),
       answerViewed:!!entry.answerViewed, legacyViewed:!!entry.legacyViewed,
       updatedAt:entry.updatedAt};
@@ -47,13 +51,13 @@ export function stage(scenario,entry) {
   if(!entry) return 'not_started';
   if(!thinkingIsReady(scenario,entry)) return entry.legacyViewed?'answer_viewed':'thinking';
   if(!String(entry.sql||'').trim()) return 'thinking_ready';
-  if(entry.practiceFingerprint===workFingerprint(entry) && entry.validationNotes?.trim()) return 'practiced';
+  if(entry.evaluationFingerprint===workFingerprint(entry) && entry.evaluationResult?.passed) return 'verified';
   if(entry.fiddleFingerprint===workFingerprint(entry)) return 'fiddle_opened';
   return 'sql_written';
 }
 export function chooseNext(pool,state,currentId) {
-  return pool.find(s=>s.id!==currentId && stage(s,state.entries[s.id])!=='practiced')
-    || pool.find(s=>s.id===currentId && stage(s,state.entries[s.id])!=='practiced') || null;
+  return pool.find(s=>s.id!==currentId && stage(s,state.entries[s.id])!=='verified')
+    || pool.find(s=>s.id===currentId && stage(s,state.entries[s.id])!=='verified') || null;
 }
 export function importLegacy(idsFromOldStorage,state,aliases,ids,now=Date.now()) {
   const next=structuredClone(state);let timestamp=nextTimestamp(next,now);

@@ -1,16 +1,18 @@
-import {evaluateThinking, thinkingIsReady} from './thinking.js';
+import {evaluateThinking, thinkingIsReady, thinkingText} from './thinking.js';
 import {EMPTY, readProgress, saveProgress, mergeProgress, nextTimestamp, workFingerprint, stage, chooseNext, importLegacy, storageKey} from './progress.js';
 import {createCloudSync} from './cloud.js';
 import {renderSchemaCards} from './schema.js';
 import {escapeHtml} from './util.js';
+import {SqlEvaluator,loadBrowserPGlite} from './sql-evaluator.js';
 
 const $ = id => document.getElementById(id);
 let data, scenarios=[], ids=new Set(), state=EMPTY(), current=null, user=null;
 let selectedDomain=null, selectedLevel=null, client=null, deferredPrompt=null, syncTimer=null;
 let authNotice='';
+let sqlEvaluator=null,sqlEvaluationRunning=false;
 let storage;
 try { storage=window.localStorage; } catch { storage={getItem(){return null;},setItem(){throw Error('Storage unavailable');}}; }
-const labels={not_started:'Not started',thinking:'Thinking in progress',answer_viewed:'Earlier answer viewed — thinking not assessed',thinking_ready:'Thinking ready',sql_written:'SQL draft saved',fiddle_opened:'DB Fiddle opened — results not verified',practiced:'Practiced — self-reported'};
+const labels={not_started:'Not started',thinking:'Thinking in progress',answer_viewed:'Earlier answer viewed — thinking not assessed',thinking_ready:'Thinking ready',sql_written:'SQL draft saved',fiddle_opened:'DB Fiddle opened — SQL not verified',verified:'SQL verified'};
 const cloud=createCloudSync({
   client: {rpc(...args){return client.rpc(...args);}},
   getContext:()=>({userId:user?.id,state:structuredClone(state)}),
@@ -40,19 +42,19 @@ function changeEntry(patch) {
   persist(); updateProgress();
 }
 function readThinking() {
-  return {goal:$('thinkingGoal').value,sources:$('thinkingSources').value,steps:$('thinking').value,check:$('thinkingCheck').value};
+  return {response:$('thinking').value};
 }
 function updateProgress() {
   const stages=scenarios.map(s=>stage(s,state.entries[s.id]));
-  const practiced=stages.filter(x=>x==='practiced').length;
-  $('progressCount').textContent=practiced+' / '+scenarios.length;
-  $('progressFill').style.width=(scenarios.length ? practiced/scenarios.length*100 : 0)+'%';
+  const verified=stages.filter(x=>x==='verified').length;
+  $('progressCount').textContent=verified+' / '+scenarios.length;
+  $('progressFill').style.width=(scenarios.length ? verified/scenarios.length*100 : 0)+'%';
   $('progressStages').textContent=stages.filter(x=>x!=='not_started').length+' started · '+
-    stages.filter(x=>['thinking_ready','sql_written','fiddle_opened','practiced'].includes(x)).length+' thinking ready · '+practiced+' practiced';
+    stages.filter(x=>['thinking_ready','sql_written','fiddle_opened','verified'].includes(x)).length+' thinking ready · '+verified+' verified';
   if(current) {
     $('learningStage').textContent=labels[stage(current,entry())];
-    $('doneTag').classList.toggle('show',stage(current,entry())==='practiced');
-    $('doneTag').textContent='Practice recorded';
+    $('doneTag').classList.toggle('show',stage(current,entry())==='verified');
+    $('doneTag').textContent='SQL verified';
   }
 }
 function renderAssessment(result) {
@@ -71,12 +73,23 @@ function updateGates() {
   $('fiddleButton').disabled=!ready||!hasSql;
   $('copySetup').disabled=!ready;
   $('copyQuery').disabled=!ready||!hasSql;
-  $('sqlGate').textContent='Write your own query before opening DB Fiddle. Changing your thinking requires another check.';
-  $('finishButton').disabled=!ready||!hasSql||e.fiddleFingerprint!==workFingerprint(e);
+  $('checkSqlButton').disabled=!ready||!hasSql||sqlEvaluationRunning;
+  $('sqlGate').textContent='Write one read-only PostgreSQL SELECT query. Changing your thinking or SQL requires another check.';
   $('practiceStatus').textContent=current ? labels[stage(current,e)] : '';
-  const practiced=current && stage(current,e)==='practiced';
-  $('solutionHelp').hidden=!practiced;
-  if(!practiced) {$('solutionHelp').open=false;$('referenceSql').textContent='';$('pseudo').textContent='';}
+  const verified=current && stage(current,e)==='verified';
+  $('nextButton').disabled=!verified;
+  $('solutionHelp').hidden=!verified;
+  if(!verified) {$('solutionHelp').open=false;$('referenceSql').textContent='';$('pseudo').textContent='';}
+}
+function renderSqlEvaluation(result) {
+  const box=$('sqlEvaluation');
+  if(!result){box.hidden=true;box.className='evaluation';$('sqlPreview').hidden=true;return;}
+  box.hidden=false;box.className='evaluation '+(result.passed?'pass':'fail');
+  $('sqlEvaluationTitle').textContent=result.passed?'✓ SQL result verified':'SQL needs another look';
+  $('sqlEvaluationMessage').textContent=result.message||'';
+  const preview=Array.isArray(result.preview)&&result.preview.length?result.preview:null;
+  $('sqlPreview').hidden=!preview;
+  $('sqlPreview').textContent=preview?'Result preview:\n'+preview.map(row=>row.map(value=>value===null?'NULL':value).join(' | ')).join('\n'):'';
 }
 function renderScenario() {
   $('home').classList.remove('active');$('practice').classList.add('active');
@@ -87,11 +100,11 @@ function renderScenario() {
   $('tags').textContent='Think → Write → Validate';
   renderSchemaCards(current.schemaText);
   const e=entry();
-  for(const [id,key]of [['thinkingGoal','goal'],['thinkingSources','sources'],['thinking','steps'],['thinkingCheck','check']]) $(id).value=e.thinking?.[key]||'';
-  $('learnerSql').value=e.sql||'';$('validationNotes').value=e.validationNotes||'';
-  $('validationConfirm').checked=stage(current,e)==='practiced';
+  $('thinking').value=thinkingText(e.thinking);
+  $('learnerSql').value=e.sql||'';
   $('fiddleFallback').hidden=true;$('manualCopy').hidden=true;
   renderAssessment(e.assessment?evaluateThinking(current,e.thinking||{}):null);
+  renderSqlEvaluation(e.evaluationFingerprint===workFingerprint(e)?e.evaluationResult:null);
   updateProgress();updateGates();
 }
 function loadScenario() {
@@ -114,12 +127,12 @@ function evaluatePlan() {
   if(assessment.ready) $('learnerSql').focus();
 }
 function nextScenario() {
-  if(!current || stage(current,entry())!=='practiced') {alert('Finish your thinking, then write and check your SQL in DB Fiddle before continuing.');return;}
+  if(!current || stage(current,entry())!=='verified') {alert('Finish your thinking and pass the SQL result check before continuing.');return;}
   const pool=scenarios.filter(s=>s.domain===selectedDomain&&s.level===selectedLevel);
   const next=chooseNext(pool,state,current.id);
   if(!next) {
     current=pool[(pool.findIndex(s=>s.id===current.id)+1)%pool.length];renderScenario();
-    $('practiceStatus').textContent='All exercises in this selection have practice recorded. You are reviewing completed work.';return;
+    $('practiceStatus').textContent='All exercises in this selection are verified. You are reviewing completed work.';return;
   }
   current=next;renderScenario();
 }
@@ -137,12 +150,21 @@ function runDbFiddle() {
   changeEntry({fiddleFingerprint:workFingerprint(entry())});
   $('fiddleFallback').hidden=false;updateGates();
 }
-function finishPractice() {
+async function evaluateSql() {
   const e=entry();
-  if(!current||!thinkingIsReady(current,e)||!e.sql?.trim()||e.fiddleFingerprint!==workFingerprint(e))return;
-  const notes=$('validationNotes').value.trim();
-  if(!$('validationConfirm').checked||notes.split(/\s+/).length<6) {alert('Confirm you ran the query and describe what you observed in at least one sentence.');return;}
-  changeEntry({validationNotes:notes,practiceFingerprint:workFingerprint(e)});updateGates();
+  if(sqlEvaluationRunning||!current||!thinkingIsReady(current,e)||!e.sql?.trim())return;
+  sqlEvaluationRunning=true;renderSqlEvaluation({passed:false,message:'Starting the local PostgreSQL engine…'});updateGates();
+  try {
+    if(!sqlEvaluator)sqlEvaluator=new SqlEvaluator(await loadBrowserPGlite());
+    const result=await sqlEvaluator.evaluate(current,data.assets[current.domain],e.sql);
+    const fingerprint=workFingerprint(entry());
+    changeEntry({evaluationFingerprint:result.passed?fingerprint:null,evaluationResult:result,
+      evaluationAt:Date.now(),attempts:(entry().attempts||0)+1});
+    renderSqlEvaluation(result);
+  } catch(error) {
+    renderSqlEvaluation({passed:false,message:'The local SQL engine could not start. Check your connection once, then retry.'});
+    console.error(error);
+  } finally {sqlEvaluationRunning=false;updateGates();}
 }
 function resetProgress() {
   if(!confirm('Reset progress for '+(user?'this signed-in account':'this guest profile')+'? Other accounts will not be changed.'))return;
@@ -243,7 +265,7 @@ window.addEventListener('storage',event=>{
   if(JSON.stringify(merged)===JSON.stringify(state))return;
   state=merged;updateProgress();if(current)renderScenario();
 });
-Object.assign(window,{selectDomain,selectLevel,evaluatePlan,nextScenario,goHome,copySetup,copyQuery,runDbFiddle,finishPractice,resetProgress,importOldHistory,importGuestProgress,importCloudHistory,retrySync,signInWithGoogle,signOut,installApp});
+Object.assign(window,{selectDomain,selectLevel,evaluatePlan,evaluateSql,nextScenario,goHome,copySetup,copyQuery,runDbFiddle,resetProgress,importOldHistory,importGuestProgress,importCloudHistory,retrySync,signInWithGoogle,signOut,installApp});
 try {
   const response=await fetch('./data/scenarios.json');
   if(!response.ok)throw Error('Scenario download failed');
@@ -253,18 +275,16 @@ try {
     el.setAttribute('role','button');el.tabIndex=0;
     el.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();el.click();}});
   });
-  for(const id of ['thinkingGoal','thinkingSources','thinking','thinkingCheck'])$(id).addEventListener('input',()=>{
-    changeEntry({thinking:readThinking(),assessment:null,fiddleFingerprint:null,practiceFingerprint:null});
-    $('validationConfirm').checked=false;renderAssessment(null);updateGates();
+  $('thinking').addEventListener('input',()=>{
+    changeEntry({thinking:readThinking(),assessment:null,fiddleFingerprint:null,evaluationFingerprint:null,evaluationResult:null});
+    renderAssessment(null);renderSqlEvaluation(null);updateGates();
   });
   $('learnerSql').addEventListener('input',()=>{
-    changeEntry({sql:$('learnerSql').value,fiddleFingerprint:null,practiceFingerprint:null});
-    $('validationConfirm').checked=false;updateGates();
+    changeEntry({sql:$('learnerSql').value,fiddleFingerprint:null,evaluationFingerprint:null,evaluationResult:null});
+    renderSqlEvaluation(null);updateGates();
   });
-  $('validationNotes').addEventListener('input',()=>{changeEntry({validationNotes:$('validationNotes').value,practiceFingerprint:null});updateGates();});
-  $('validationConfirm').addEventListener('change',()=>{if(!$('validationConfirm').checked){changeEntry({practiceFingerprint:null});updateGates();}});
   $('solutionHelp').addEventListener('toggle',()=>{
-    if($('solutionHelp').open && current && stage(current,entry())==='practiced'){
+    if($('solutionHelp').open && current && stage(current,entry())==='verified'){
       $('pseudo').textContent=current.pseudo;$('referenceSql').textContent=current.sql;changeEntry({answerViewed:true});
     }
   });
