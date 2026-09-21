@@ -1,10 +1,7 @@
-const CACHE='crack-sql-verified-v5';
+const CACHE='crack-sql-thinking-v6';
 const ROOT=new URL('./',self.location).href;
 const SHELL=['index.html','manifest.json','icon-512.png','icon-maskable-512.png','apple-touch-icon.png',
-'data/scenarios.json','js/app.js','js/thinking.js','js/progress.js','js/cloud.js','js/schema.js','js/sql-evaluator.js','js/util.js',
-'vendor/pglite/index.js','vendor/pglite/chunk-2BOC2OMW.js','vendor/pglite/chunk-DDJLRBDX.js','vendor/pglite/chunk-F4GETNPB.js',
-'vendor/pglite/chunk-JDT7TZ73.js','vendor/pglite/chunk-NNS5RQRF.js','vendor/pglite/chunk-QY3QWFKW.js','vendor/pglite/chunk-RYDTTX3G.js',
-'vendor/pglite/initdb.wasm','vendor/pglite/pglite.data','vendor/pglite/pglite.wasm'].map(p=>new URL(p,ROOT).href);
+'data/scenarios.json','js/app.js','js/thinking.js','js/progress.js','js/cloud.js','js/schema.js','js/util.js'].map(p=>new URL(p,ROOT).href);
 self.addEventListener('install',event=>{
   // Fail installation as a unit if an asset is absent. Keep the last working version.
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));
