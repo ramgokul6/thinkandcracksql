@@ -1,7 +1,7 @@
 {
   "name": "Crack SQL — Think Like a Data Engineer",
   "short_name": "Crack SQL",
-  "description": "Think through 94 distinct SQL exercises before writing and validating your query.",
+  "description": "Think through 420 SQL exercises, then write PostgreSQL and verify the result in the app.",
   "start_url": "./index.html",
   "id": "./index.html",
   "scope": "./",
