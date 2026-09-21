@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer</title>
-<meta name="description" content="Practice 94 real-world SQL scenarios across Banking, Healthcare, Insurance & Retail. Explain your reasoning, write your own SQL, then validate it in DB Fiddle." />
+<meta name="description" content="Practice 420 real-world PostgreSQL exercises across seven domains. Explain your reasoning, write SQL, and verify the result in the app." />
 <meta name="theme-color" content="#2563eb" />
 <link rel="canonical" href="https://thinkandcracksql.netlify.app/" />
 
@@ -15,7 +15,7 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://thinkandcracksql.netlify.app/" />
 <meta property="og:title" content="Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer" />
-<meta property="og:description" content="94 distinct exercises. Explain your reasoning, write your own SQL, then validate in DB Fiddle." />
+<meta property="og:description" content="420 exercises across seven domains. Think first, write PostgreSQL, and verify the result in the app." />
 <meta property="og:image" content="https://thinkandcracksql.netlify.app/icon-512.png" />
 <meta property="og:image:width" content="512" />
 <meta property="og:image:height" content="512" />
@@ -23,7 +23,7 @@
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer" />
-<meta name="twitter:description" content="Think first, write your own SQL, then validate in DB Fiddle across Banking, Healthcare, Insurance and Retail." />
+<meta name="twitter:description" content="Think first, write PostgreSQL, and verify the result across seven real-world domains." />
 <meta name="twitter:image" content="https://thinkandcracksql.netlify.app/icon-512.png" />
 
 <!-- PWA -->
@@ -237,7 +237,7 @@ h2 {
   padding:3px 7px;
   letter-spacing:.3px;
 }
-.badge-pk { background:#fef3c7; color:#9940e; border:1px solid #fde68a; }
+.badge-pk { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
 .badge-fk { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
 .fk-ref { font-size:10.5px; color:#64748b; white-space:nowrap; }
 
@@ -366,7 +366,7 @@ button.action {
 }
 .improve {
   background:#fffbeb;
-  color:#9940e;
+  color:#92400e;
   border:1px solid #fde68a;
   border-radius:16px;
   padding:13px;
@@ -418,6 +418,10 @@ textarea { min-height:100px; }
 button:disabled { opacity:.5; cursor:not-allowed; }
 #improve { padding-left:22px; line-height:1.8; }
 #syncStatus { font-size:13px; }
+.evaluation { margin:12px 0; padding:12px; border-radius:14px; background:#f8fafc; border:1px solid var(--line); }
+.evaluation.pass { background:#f0fdf4; border-color:#86efac; color:#166534; }
+.evaluation.fail { background:#fff7ed; border-color:#fdba74; color:#9a3412; }
+.evaluation pre { max-height:220px; overflow:auto; white-space:pre-wrap; }
 .pick:focus-visible,.level:focus-visible { outline:3px solid #2563eb; }
 </style>
 <script type="module" src="./js/app.js"></script>
@@ -444,12 +448,12 @@ button:disabled { opacity:.5; cursor:not-allowed; }
 
   <div class="progress-card">
     <div class="progress-top">
-      <div class="progress-label">Practice progress (self-reported)</div>
-      <div class="progress-count" id="progressCount">0 / 94</div>
+      <div class="progress-label">Verified SQL progress</div>
+      <div class="progress-count" id="progressCount">0 / 420</div>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     <p id="progressStages" class="small"></p>
-    <p class="small">Progress records your practice, not independently verified SQL correctness.</p>
+    <p class="small">Progress is recorded only when your query matches the expected PostgreSQL result.</p>
     <p id="syncStatus" role="status" aria-live="polite"></p>
     <button class="progress-reset" onclick="resetProgress()">Reset my progress</button>
     <button class="progress-reset" onclick="retrySync()">Retry sync</button>
@@ -463,6 +467,9 @@ button:disabled { opacity:.5; cursor:not-allowed; }
     <div class="pick domain" onclick="selectDomain('Banking',this)"><div class="icon">🏦</div><div class="pick-title">Banking</div><div class="pick-note">Accounts & transactions</div></div>
     <div class="pick domain" onclick="selectDomain('Healthcare',this)"><div class="icon">🏥</div><div class="pick-title">Healthcare</div><div class="pick-note">Patients & visits</div></div>
     <div class="pick domain" onclick="selectDomain('Insurance',this)"><div class="icon">🛡️</div><div class="pick-title">Insurance</div><div class="pick-note">Policies & claims</div></div>
+    <div class="pick domain" onclick="selectDomain('Capital Markets',this)"><div class="icon">📈</div><div class="pick-title">Capital Markets</div><div class="pick-note">Investors & trades</div></div>
+    <div class="pick domain" onclick="selectDomain('Semiconductor',this)"><div class="icon">🔬</div><div class="pick-title">Semiconductor</div><div class="pick-note">Batches & chip tests</div></div>
+    <div class="pick domain" onclick="selectDomain('Education',this)"><div class="icon">🎓</div><div class="pick-title">Education</div><div class="pick-note">Students & assessments</div></div>
     <div class="pick domain" onclick="selectDomain('Retail',this)"><div class="icon">🛒</div><div class="pick-title">Retail</div><div class="pick-note">Orders & products</div></div>
   </div>
 
@@ -503,17 +510,11 @@ button:disabled { opacity:.5; cursor:not-allowed; }
 
   <div class="card">
     <h2>1. Think through the problem</h2>
-    <p>Explain your plan in your own words. SQL comes after your reasoning.</p>
-    <label for="thinkingGoal">What does the business need?</label>
-    <textarea id="thinkingGoal" maxlength="4000" placeholder="Describe the result and who or what each result row represents."></textarea>
-    <label for="thinkingSources">Which data will you use, and why?</label>
-    <textarea id="thinkingSources" maxlength="4000" placeholder="Name the relevant tables and explain what you need from them."></textarea>
-    <label for="thinking">How will you solve it?</label>
-    <textarea id="thinking" maxlength="4000" placeholder="Explain the steps, relationships, conditions and calculations that apply to this problem."></textarea>
-    <label for="thinkingCheck">What output do you expect, and how will you check it?</label>
-    <textarea id="thinkingCheck" maxlength="4000" placeholder="Describe the output shape and a boundary, missing-data or duplicate check."></textarea>
+    <p>Think like you would explain the solution to another person. SQL comes after your reasoning.</p>
+    <label for="thinking">How would you solve this problem?</label>
+    <textarea id="thinking" maxlength="8000" placeholder="In your own words: what result is needed, which data would you use, what steps would you follow, and how would you check the answer?"></textarea>
     <div class="actions"><button class="action primary" onclick="evaluatePlan()">Check my thinking</button></div>
-    <p class="small">Guided English reasoning check: looks for scenario-specific explanations. It is not an AI understanding test. You need all core points and at least 8/10 to write SQL; extra words earn no marks.</p>
+    <p class="small">Write naturally in one response. The Thinking Score quietly checks the expected result, relevant data, approach and output check. You need all core points and at least 8/10 to write SQL.</p>
     <div id="feedback" class="feedback" role="status" aria-live="polite">
       <div class="score" id="score"></div><p id="assessmentMessage"></p>
       <ul id="improve"></ul>
@@ -525,20 +526,23 @@ button:disabled { opacity:.5; cursor:not-allowed; }
     <textarea id="learnerSql" maxlength="20000" spellcheck="false" placeholder="Write your own query here."></textarea>
     <p id="sqlGate" class="small"></p>
     <div class="actions">
+      <button class="action primary" id="checkSqlButton" onclick="evaluateSql()">Check my SQL</button>
+      <button class="action secondary" id="nextButton" onclick="nextScenario()" disabled>Next Scenario</button>
+    </div>
+    <div id="sqlEvaluation" class="evaluation" hidden role="status" aria-live="polite">
+      <strong id="sqlEvaluationTitle"></strong>
+      <p id="sqlEvaluationMessage"></p>
+      <pre id="sqlPreview" hidden></pre>
+    </div>
+    <h3>Optional: inspect it in DB Fiddle</h3>
+    <div class="actions">
       <button class="action primary" id="fiddleButton" onclick="runDbFiddle()">Open DB Fiddle</button>
       <button class="action ghost" id="copySetup" onclick="copySetup()">Copy schema + data</button>
       <button class="action ghost" id="copyQuery" onclick="copyQuery()">Copy my query</button>
     </div>
     <p>Select PostgreSQL in DB Fiddle. Paste schema + data into its schema pane and your query into its query pane, then run.</p>
     <p id="fiddleFallback" hidden>If the new tab did not open, <a href="https://www.db-fiddle.com/" target="_blank" rel="noopener noreferrer">open DB Fiddle here</a>.</p>
-    <p class="small">DB Fiddle results are not sent back to this app. Opening it does not validate or complete your work.</p>
-    <label for="validationNotes">3. What did you observe in DB Fiddle?</label>
-    <textarea id="validationNotes" maxlength="4000" placeholder="Record the result and explain how it matches your reasoning, including any corrections."></textarea>
-    <label><input type="checkbox" id="validationConfirm"> I ran my query and checked its output against the problem.</label>
-    <div class="actions">
-      <button class="action primary" id="finishButton" onclick="finishPractice()">Save practice confirmation</button>
-      <button class="action secondary" onclick="nextScenario()">Next Scenario</button>
-    </div>
+    <p class="small">DB Fiddle is optional. Crack SQL evaluates the query locally in a read-only PostgreSQL engine.</p>
     <p id="practiceStatus" role="status"></p>
     <details id="solutionHelp" hidden><summary>Review suggested reasoning and reference SQL</summary>
       <p class="small">This is one reference approach. Other correct SQL solutions are possible.</p>
@@ -549,7 +553,7 @@ button:disabled { opacity:.5; cursor:not-allowed; }
     <label for="copyText">Clipboard unavailable: select and copy this text</label>
     <textarea id="copyText" readonly></textarea>
   </div>
-  <div class="footer">Crack SQL • 94 distinct exercises • Think first</div>
+  <div class="footer">Crack SQL • 420 exercises • Think → Write → Verify</div>
 </section>
 </div>
 
