@@ -13,6 +13,7 @@ export function sanitize(value, ids) {
     result.entries[id] = {thinking, sql:String(entry.sql || '').slice(0,20000),
       assessment: entry.assessment && typeof entry.assessment === 'object' ? entry.assessment : null,
       fiddleFingerprint: typeof entry.fiddleFingerprint === 'string' ? entry.fiddleFingerprint : null,
+      externalValidationFingerprint: typeof entry.externalValidationFingerprint === 'string' ? entry.externalValidationFingerprint : null,
       evaluationFingerprint: typeof entry.evaluationFingerprint === 'string' ? entry.evaluationFingerprint : null,
       evaluationResult: entry.evaluationResult && typeof entry.evaluationResult === 'object' ? entry.evaluationResult : null,
       evaluationAt: Number.isFinite(entry.evaluationAt) ? entry.evaluationAt : null,
@@ -45,19 +46,21 @@ export function nextTimestamp(state, now=Date.now()) {
   return Math.max(now,state.resetAt+1,...Object.values(state.entries).map(e=>e.updatedAt+1));
 }
 export function workFingerprint(entry) {
-  return JSON.stringify([entry.assessment?.fingerprint || '',String(entry.sql || '').trim()]);
+  return JSON.stringify([
+    entry.assessment?.fingerprint || '',
+    String(entry.referenceSql || entry.sql || '').trim()
+  ]);
 }
 export function stage(scenario,entry) {
   if(!entry) return 'not_started';
   if(!thinkingIsReady(scenario,entry)) return entry.legacyViewed?'answer_viewed':'thinking';
-  if(!String(entry.sql||'').trim()) return 'thinking_ready';
-  if(entry.evaluationFingerprint===workFingerprint(entry) && entry.evaluationResult?.passed) return 'verified';
+  if(entry.externalValidationFingerprint===workFingerprint(entry)) return 'practice_confirmed';
   if(entry.fiddleFingerprint===workFingerprint(entry)) return 'fiddle_opened';
-  return 'sql_written';
+  return 'thinking_ready';
 }
 export function chooseNext(pool,state,currentId) {
-  return pool.find(s=>s.id!==currentId && stage(s,state.entries[s.id])!=='verified')
-    || pool.find(s=>s.id===currentId && stage(s,state.entries[s.id])!=='verified') || null;
+  return pool.find(s=>s.id!==currentId && stage(s,state.entries[s.id])!=='practice_confirmed')
+    || pool.find(s=>s.id===currentId && stage(s,state.entries[s.id])!=='practice_confirmed') || null;
 }
 export function importLegacy(idsFromOldStorage,state,aliases,ids,now=Date.now()) {
   const next=structuredClone(state);let timestamp=nextTimestamp(next,now);

@@ -42,8 +42,8 @@ export function evaluateThinking(scenario, input) {
   const ready=!rawSql&&score>=8&&items.filter(c=>c.category!=='check').every(c=>c.passed);
   return { version:RUBRIC_VERSION, score, ready, fingerprint:fingerprint(input), items,
     message:rawSql ? 'Explain your plan in your own words before writing SQL.' :
-      ready ? 'Your plan covers the required points. Now write SQL from your reasoning.' :
-      'Revise the missing points below, then check your thinking again.' };
+      ready ? 'Your plan covers the key points. The reference SQL is ready below.' :
+      'Add the missing points to your explanation. Your score updates as you type.' };
 }
 export function thinkingIsReady(scenario, entry) {
   return !!entry?.thinking && evaluateThinking(scenario, entry.thinking).ready

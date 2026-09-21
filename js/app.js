@@ -3,16 +3,14 @@ import {EMPTY, readProgress, saveProgress, mergeProgress, nextTimestamp, workFin
 import {createCloudSync} from './cloud.js';
 import {renderSchemaCards} from './schema.js';
 import {escapeHtml} from './util.js';
-import {SqlEvaluator,loadBrowserPGlite} from './sql-evaluator.js';
 
 const $ = id => document.getElementById(id);
 let data, scenarios=[], ids=new Set(), state=EMPTY(), current=null, user=null;
 let selectedDomain=null, selectedLevel=null, client=null, deferredPrompt=null, syncTimer=null;
 let authNotice='';
-let sqlEvaluator=null,sqlEvaluationRunning=false;
 let storage;
 try { storage=window.localStorage; } catch { storage={getItem(){return null;},setItem(){throw Error('Storage unavailable');}}; }
-const labels={not_started:'Not started',thinking:'Thinking in progress',answer_viewed:'Earlier answer viewed — thinking not assessed',thinking_ready:'Thinking ready',sql_written:'SQL draft saved',fiddle_opened:'DB Fiddle opened — SQL not verified',verified:'SQL verified'};
+const labels={not_started:'Not started',thinking:'Thinking in progress',answer_viewed:'Earlier answer viewed — thinking not assessed',thinking_ready:'Thinking score ready',fiddle_opened:'DB Fiddle opened — awaiting your confirmation',practice_confirmed:'DB Fiddle practice self-reported'};
 const cloud=createCloudSync({
   client: {rpc(...args){return client.rpc(...args);}},
   getContext:()=>({userId:user?.id,state:structuredClone(state)}),
@@ -46,50 +44,37 @@ function readThinking() {
 }
 function updateProgress() {
   const stages=scenarios.map(s=>stage(s,state.entries[s.id]));
-  const verified=stages.filter(x=>x==='verified').length;
-  $('progressCount').textContent=verified+' / '+scenarios.length;
-  $('progressFill').style.width=(scenarios.length ? verified/scenarios.length*100 : 0)+'%';
+  const confirmed=stages.filter(x=>x==='practice_confirmed').length;
+  $('progressCount').textContent=confirmed+' / '+scenarios.length;
+  $('progressFill').style.width=(scenarios.length ? confirmed/scenarios.length*100 : 0)+'%';
   $('progressStages').textContent=stages.filter(x=>x!=='not_started').length+' started · '+
-    stages.filter(x=>['thinking_ready','sql_written','fiddle_opened','verified'].includes(x)).length+' thinking ready · '+verified+' verified';
+    stages.filter(x=>['thinking_ready','fiddle_opened','practice_confirmed'].includes(x)).length+' thinking ready · '+confirmed+' DB Fiddle confirmations';
   if(current) {
     $('learningStage').textContent=labels[stage(current,entry())];
-    $('doneTag').classList.toggle('show',stage(current,entry())==='verified');
-    $('doneTag').textContent='SQL verified';
+    $('doneTag').classList.toggle('show',stage(current,entry())==='practice_confirmed');
+    $('doneTag').textContent='Practice confirmed';
   }
 }
 function renderAssessment(result) {
-  $('feedback').classList.toggle('active',!!result);
-  if(!result) return;
-  $('score').textContent='Thinking coverage: '+result.score+'/10';
-  $('assessmentMessage').textContent=result.message;
-  $('improve').replaceChildren(...result.items.map(item=>{
+  $('feedback').classList.add('active');
+  $('score').textContent='Thinking Score: '+(result?.score??0)+'/10';
+  $('assessmentMessage').textContent=result?.message||'Start explaining your approach. Your score will update as you type.';
+  $('improve').replaceChildren(...(result?.items||[]).map(item=>{
     const li=document.createElement('li');
     li.textContent=(item.passed?'✓ ':'Revise: ')+item.label;return li;
   }));
 }
 function updateGates() {
-  const e=entry(),ready=current && thinkingIsReady(current,e),hasSql=!!e.sql?.trim();
-  $('sqlSection').hidden=!ready;
-  $('fiddleButton').disabled=!ready||!hasSql;
+  const e=entry(),ready=current && thinkingIsReady(current,e),fingerprint=workFingerprint(e);
+  $('answerSection').hidden=!ready;
+  $('referenceSql').textContent=ready?current.sql:'';
+  $('fiddleButton').disabled=!ready;
   $('copySetup').disabled=!ready;
-  $('copyQuery').disabled=!ready||!hasSql;
-  $('checkSqlButton').disabled=!ready||!hasSql||sqlEvaluationRunning;
-  $('sqlGate').textContent='Write one read-only PostgreSQL SELECT query. Changing your thinking or SQL requires another check.';
+  $('copyQuery').disabled=!ready;
+  $('confirmDbFiddle').disabled=!ready||e.fiddleFingerprint!==fingerprint||e.externalValidationFingerprint===fingerprint;
+  $('sqlGate').textContent='The reference SQL appears after your thinking reaches the required score. Run it in DB Fiddle to validate the result.';
   $('practiceStatus').textContent=current ? labels[stage(current,e)] : '';
-  const verified=current && stage(current,e)==='verified';
-  $('nextButton').disabled=!verified;
-  $('solutionHelp').hidden=!verified;
-  if(!verified) {$('solutionHelp').open=false;$('referenceSql').textContent='';$('pseudo').textContent='';}
-}
-function renderSqlEvaluation(result) {
-  const box=$('sqlEvaluation');
-  if(!result){box.hidden=true;box.className='evaluation';$('sqlPreview').hidden=true;return;}
-  box.hidden=false;box.className='evaluation '+(result.passed?'pass':'fail');
-  $('sqlEvaluationTitle').textContent=result.passed?'✓ SQL result verified':'SQL needs another look';
-  $('sqlEvaluationMessage').textContent=result.message||'';
-  const preview=Array.isArray(result.preview)&&result.preview.length?result.preview:null;
-  $('sqlPreview').hidden=!preview;
-  $('sqlPreview').textContent=preview?'Result preview:\n'+preview.map(row=>row.map(value=>value===null?'NULL':value).join(' | ')).join('\n'):'';
+  $('nextButton').disabled=!current||stage(current,e)!=='practice_confirmed';
 }
 function renderScenario() {
   $('home').classList.remove('active');$('practice').classList.add('active');
@@ -97,14 +82,12 @@ function renderScenario() {
   $('title').textContent=current.id;$('question').textContent=current.question;
   const pool=scenarios.filter(s=>s.domain===current.domain&&s.level===current.level);
   $('qno').textContent='Exercise '+current.questionNo+' / '+pool.length;
-  $('tags').textContent='Think → Write → Validate';
+  $('tags').textContent='Think → See SQL → Validate in DB Fiddle';
   renderSchemaCards(current.schemaText);
   const e=entry();
   $('thinking').value=thinkingText(e.thinking);
-  $('learnerSql').value=e.sql||'';
   $('fiddleFallback').hidden=true;$('manualCopy').hidden=true;
   renderAssessment(e.assessment?evaluateThinking(current,e.thinking||{}):null);
-  renderSqlEvaluation(e.evaluationFingerprint===workFingerprint(e)?e.evaluationResult:null);
   updateProgress();updateGates();
 }
 function loadScenario() {
@@ -122,17 +105,16 @@ function selectLevel(level,el) {
 function evaluatePlan() {
   if(!current) return;
   const thinking=readThinking(),assessment=evaluateThinking(current,thinking);
-  changeEntry({thinking,assessment});
+  changeEntry({thinking,assessment,referenceSql:current.sql,fiddleFingerprint:null,externalValidationFingerprint:null});
   renderAssessment(assessment);updateGates();
-  if(assessment.ready) $('learnerSql').focus();
 }
 function nextScenario() {
-  if(!current || stage(current,entry())!=='verified') {alert('Finish your thinking and pass the SQL result check before continuing.');return;}
+  if(!current || stage(current,entry())!=='practice_confirmed') {alert('Run the reference SQL in DB Fiddle and confirm that you checked its output before continuing.');return;}
   const pool=scenarios.filter(s=>s.domain===selectedDomain&&s.level===selectedLevel);
   const next=chooseNext(pool,state,current.id);
   if(!next) {
     current=pool[(pool.findIndex(s=>s.id===current.id)+1)%pool.length];renderScenario();
-    $('practiceStatus').textContent='All exercises in this selection are verified. You are reviewing completed work.';return;
+    $('practiceStatus').textContent='You have confirmed practice for all exercises in this selection. You are reviewing them again.';return;
   }
   current=next;renderScenario();
 }
@@ -142,29 +124,19 @@ async function copy(text) {
   catch {$('manualCopy').hidden=false;$('copyText').value=text;$('copyText').focus();$('copyText').select();}
 }
 function copySetup() {if(current&&thinkingIsReady(current,entry()))void copy(data.assets[current.domain].schema+'\n\n'+data.assets[current.domain].sample);}
-function copyQuery() {if(current&&thinkingIsReady(current,entry()))void copy(entry().sql||'');}
+function copyQuery() {if(current&&thinkingIsReady(current,entry()))void copy(current.sql||'');}
 function runDbFiddle() {
-  if(!current||!thinkingIsReady(current,entry())||!entry().sql?.trim()) return;
-  // Open synchronously within the user gesture, before any clipboard await.
+  if(!current||!thinkingIsReady(current,entry())) return;
   window.open('https://www.db-fiddle.com/','_blank','noopener,noreferrer');
   changeEntry({fiddleFingerprint:workFingerprint(entry())});
   $('fiddleFallback').hidden=false;updateGates();
 }
-async function evaluateSql() {
-  const e=entry();
-  if(sqlEvaluationRunning||!current||!thinkingIsReady(current,e)||!e.sql?.trim())return;
-  sqlEvaluationRunning=true;renderSqlEvaluation({passed:false,message:'Starting the local PostgreSQL engine…'});updateGates();
-  try {
-    if(!sqlEvaluator)sqlEvaluator=new SqlEvaluator(await loadBrowserPGlite());
-    const result=await sqlEvaluator.evaluate(current,data.assets[current.domain],e.sql);
-    const fingerprint=workFingerprint(entry());
-    changeEntry({evaluationFingerprint:result.passed?fingerprint:null,evaluationResult:result,
-      evaluationAt:Date.now(),attempts:(entry().attempts||0)+1});
-    renderSqlEvaluation(result);
-  } catch(error) {
-    renderSqlEvaluation({passed:false,message:'The local SQL engine could not start. Check your connection once, then retry.'});
-    console.error(error);
-  } finally {sqlEvaluationRunning=false;updateGates();}
+function confirmDbFiddle() {
+  const e=entry(),fingerprint=workFingerprint(e);
+  if(!current||!thinkingIsReady(current,e)||e.fiddleFingerprint!==fingerprint)return;
+  changeEntry({externalValidationFingerprint:fingerprint});
+  $('practiceStatus').textContent='Practice confirmation saved. DB Fiddle does not send its results to this app.';
+  updateGates();
 }
 function resetProgress() {
   if(!confirm('Reset progress for '+(user?'this signed-in account':'this guest profile')+'? Other accounts will not be changed.'))return;
@@ -265,7 +237,7 @@ window.addEventListener('storage',event=>{
   if(JSON.stringify(merged)===JSON.stringify(state))return;
   state=merged;updateProgress();if(current)renderScenario();
 });
-Object.assign(window,{selectDomain,selectLevel,evaluatePlan,evaluateSql,nextScenario,goHome,copySetup,copyQuery,runDbFiddle,resetProgress,importOldHistory,importGuestProgress,importCloudHistory,retrySync,signInWithGoogle,signOut,installApp});
+Object.assign(window,{selectDomain,selectLevel,evaluatePlan,confirmDbFiddle,nextScenario,goHome,copySetup,copyQuery,runDbFiddle,resetProgress,importOldHistory,importGuestProgress,importCloudHistory,retrySync,signInWithGoogle,signOut,installApp});
 try {
   const response=await fetch('./data/scenarios.json');
   if(!response.ok)throw Error('Scenario download failed');
@@ -275,19 +247,7 @@ try {
     el.setAttribute('role','button');el.tabIndex=0;
     el.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();el.click();}});
   });
-  $('thinking').addEventListener('input',()=>{
-    changeEntry({thinking:readThinking(),assessment:null,fiddleFingerprint:null,evaluationFingerprint:null,evaluationResult:null});
-    renderAssessment(null);renderSqlEvaluation(null);updateGates();
-  });
-  $('learnerSql').addEventListener('input',()=>{
-    changeEntry({sql:$('learnerSql').value,fiddleFingerprint:null,evaluationFingerprint:null,evaluationResult:null});
-    renderSqlEvaluation(null);updateGates();
-  });
-  $('solutionHelp').addEventListener('toggle',()=>{
-    if($('solutionHelp').open && current && stage(current,entry())==='verified'){
-      $('pseudo').textContent=current.pseudo;$('referenceSql').textContent=current.sql;changeEntry({answerViewed:true});
-    }
-  });
+  $('thinking').addEventListener('input',evaluatePlan);
   updateProgress();void initAuth();
   if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 } catch(error) {

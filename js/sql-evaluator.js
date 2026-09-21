@@ -109,9 +109,3 @@ export class SqlEvaluator {
     }
   }
 }
-
-let browserClassPromise;
-export async function loadBrowserPGlite() {
-  browserClassPromise ||= import('../vendor/pglite/index.js').then(module=>module.PGlite);
-  return browserClassPromise;
-}
