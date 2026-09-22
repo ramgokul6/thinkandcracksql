@@ -8,7 +8,7 @@ Think independently before asking AI for SQL.
 
 1. Sign in with Google, then pick a domain and difficulty. The first unfinished exercise opens automatically.
 2. Explain the solution naturally in one thinking box—what is needed, which data applies, the approach and how to check it.
-3. The Thinking Score updates as the learner types. The rubric scores the requested result (2), data (2), scenario-specific approach (4) and output check (2), normalized to 10.
+3. The learner selects **Check My Thinking** after writing the complete response. Only then does the app display the score and coaching. The rubric scores the requested result (2), data (2), scenario-specific approach (4) and output check (2), normalized to 10.
 4. When the scenario rubric is ready, the learner chooses **Generate SQL** to reveal its authored reference query. There are no marks for length or unrelated SQL keywords.
 5. Copy the scenario schema and sample data, then open DB Fiddle and run the reference SQL there. DB Fiddle results are not returned to Crack SQL.
 6. Learners confirm that they ran and checked the query in DB Fiddle; that confirmation unlocks the next exercise. Progress is self-reported, not independently verified.

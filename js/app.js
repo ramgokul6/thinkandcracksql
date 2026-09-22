@@ -65,22 +65,24 @@ function updateProgress() {
 }
 function allPreparedSolved(){return !!data?.scenarios?.length&&data.scenarios.every(s=>stage(s,state.entries[s.id])==='practice_confirmed');}
 function renderAssessment(result) {
-  $('feedback').classList.add('active');
-  $('score').textContent='Thinking Score: '+(result?.score??0)+'/10';
-  $('assessmentMessage').textContent=result?.message||'Start explaining your approach. Your score will update as you type.';
+  $('feedback').classList.toggle('active',!!result);
+  $('score').textContent=result?'Thinking Score: '+result.score+'/10':'';
+  $('assessmentMessage').textContent=result?.message||'';
   $('improve').replaceChildren(...(result?.items||[]).map(item=>{
     const li=document.createElement('li');
     const points=Number(item.weight).toFixed(Number.isInteger(item.weight)?0:1);
     li.textContent=(item.passed?'✓ You covered: ':'Next thinking step: ')+item.label+' ('+points+' points)';return li;
   }));
-  const started=!!$('thinking').value.trim();
-  $('thinkingDecode').hidden=!started||!current;
-  $('expectedThinking').textContent=started&&current?current.pseudo:'';
+  const hasThinking=!!$('thinking').value.trim();
+  $('thinkingDecode').hidden=!result||!current||!hasThinking;
+  $('expectedThinking').textContent=result&&current&&hasThinking?current.pseudo:'';
 }
 function updateGates() {
   const e=entry(),ready=current && thinkingIsReady(current,e),fingerprint=workFingerprint(e);
   const generated=!!(ready&&e.sqlGenerated&&e.referenceSql);
-  $('sqlGenerateSection').hidden=!ready||generated;
+  $('sqlGenerateSection').hidden=!ready;
+  $('generateSql').disabled=!ready||generated;
+  $('generateSql').textContent=generated?'SQL Generated':'Generate SQL';
   $('answerSection').hidden=!generated;
   $('referenceSql').textContent=generated?e.referenceSql:'';
   $('fiddleButton').disabled=!generated;
@@ -123,9 +125,18 @@ function selectLevel(level,el) {
 }
 function evaluatePlan() {
   if(!user||!current) return;
+  if(!$('thinking').value.trim()){
+    renderAssessment({score:0,ready:false,message:'Write how you would solve the problem before checking your thinking.',items:[]});
+    return;
+  }
   const thinking=readThinking(),assessment=evaluateThinking(current,thinking);
   changeEntry({thinking,assessment,sqlGenerated:false,referenceSql:'',fiddleFingerprint:null,externalValidationFingerprint:null});
   renderAssessment(assessment);updateGates();
+}
+function handleThinkingInput() {
+  if(!user||!current)return;
+  changeEntry({thinking:readThinking(),assessment:null,sqlGenerated:false,referenceSql:'',fiddleFingerprint:null,externalValidationFingerprint:null});
+  renderAssessment(null);updateGates();
 }
 function generateSql() {
   if(!user||!current||!thinkingIsReady(current,entry()))return;
@@ -377,7 +388,7 @@ try {
     el.setAttribute('role','button');el.tabIndex=0;
     el.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();el.click();}});
   });
-  $('thinking').addEventListener('input',evaluatePlan);
+  $('thinking').addEventListener('input',handleThinkingInput);
   $('thinking').addEventListener('blur',()=>{if(current&&entry().assessment)trackEvent('thinking_scored',{scenario_id:current.id,domain:current.domain,level:current.level,score:entry().assessment.score});});
   updateProgress();void initAuth();
   if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});

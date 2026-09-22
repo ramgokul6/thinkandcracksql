@@ -557,9 +557,10 @@ button:disabled { opacity:.5; cursor:not-allowed; }
     <p>Explain your approach in your own words, as if you were telling a colleague how to solve it.</p>
     <label for="thinking">How would you solve this problem?</label>
     <textarea id="thinking" maxlength="8000" placeholder="What result is needed? Which data would you use? What steps would you take? How would you check the result?"></textarea>
-    <p class="small">Your Thinking Score updates as you type. It checks the requested result, relevant data, solution steps and a result check. This guided score uses the scenario rubric; it is not an AI judgement.</p>
-    <div id="feedback" class="feedback active" role="status" aria-live="polite">
-      <div class="score" id="score">Thinking Score: 0/10</div><p id="assessmentMessage">Start explaining your approach. Your score will update as you type.</p>
+    <div class="actions"><button class="action primary" id="checkThinking" onclick="evaluatePlan()">Check My Thinking</button></div>
+    <p class="small">Write your complete reasoning first, then select Check My Thinking. The score checks the requested result, relevant data, solution steps and a result check. It is not an AI judgement.</p>
+    <div id="feedback" class="feedback" role="status" aria-live="polite">
+      <div class="score" id="score"></div><p id="assessmentMessage"></p>
       <p id="scoreRubric" class="small">Score: requested result 2 · relevant data 2 · reasoning steps 4 · checking the result 2.</p>
       <ul id="improve"></ul>
       <div id="thinkingDecode" class="pseudo" hidden><strong>A clear way to think about this:</strong><p id="expectedThinking"></p></div>
@@ -567,8 +568,11 @@ button:disabled { opacity:.5; cursor:not-allowed; }
   </div>
   <div class="card" id="sqlGenerateSection" hidden>
     <h2>Ready to see the SQL?</h2>
-    <p>Your thinking score is ready. Generate the reference SQL when you’re ready to study the query.</p>
-    <button class="action primary" id="generateSql" onclick="generateSql()">Generate SQL</button>
+    <p>Your thinking score is ready. Generate the reference SQL, then open DB Fiddle to run and test it.</p>
+    <div class="actions">
+      <button class="action primary" id="generateSql" onclick="generateSql()">Generate SQL</button>
+      <button class="action secondary" id="fiddleButton" onclick="runDbFiddle()" disabled>Open DB Fiddle</button>
+    </div>
   </div>
   <div class="card" id="answerSection" hidden>
     <h2>Your SQL answer</h2>
@@ -576,7 +580,6 @@ button:disabled { opacity:.5; cursor:not-allowed; }
     <pre id="referenceSql"></pre>
     <p id="sqlGate" class="small">Copy the scenario data and SQL into DB Fiddle to run and validate your answer.</p>
     <div class="actions">
-      <button class="action primary" id="fiddleButton" onclick="runDbFiddle()">Open DB Fiddle</button>
       <button class="action ghost" id="copySetup" onclick="copySetup()">Copy schema + sample data</button>
       <button class="action ghost" id="copyQuery" onclick="copyQuery()">Copy SQL</button>
       <button class="action secondary" id="confirmDbFiddle" onclick="confirmDbFiddle()" disabled>I ran and checked it in DB Fiddle</button>
