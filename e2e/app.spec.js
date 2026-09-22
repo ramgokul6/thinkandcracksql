@@ -23,10 +23,15 @@ test('mobile thinking score reveals SQL and gates progress on DB Fiddle confirma
   await page.getByText('Beginner',{exact:true}).click();
   const scenario=data.scenarios.find(s=>s.id==='BAN_BEG_001');
   await page.locator('#thinking').fill(scenario.exampleThinking);
+  await expect(page.locator('#feedback')).toBeHidden();
+  await expect(page.locator('#sqlGenerateSection')).toBeHidden();
+  await page.getByRole('button',{name:'Check My Thinking'}).click();
   await expect(page.locator('#score')).toHaveText('Thinking Score: 10/10');
   await expect(page.locator('#sqlGenerateSection')).toBeVisible();
   await expect(page.locator('#thinkingDecode')).toBeVisible();
+  await expect(page.getByRole('button',{name:'Open DB Fiddle'})).toBeDisabled();
   await page.getByRole('button',{name:'Generate SQL'}).click();
+  await expect(page.getByRole('button',{name:'Open DB Fiddle'})).toBeEnabled();
   await expect(page.locator('#answerSection')).toBeVisible();
   await expect(page.locator('#referenceSql')).toHaveText(scenario.sql);
   await expect(page.locator('#nextButton')).toBeDisabled();
