@@ -4,7 +4,11 @@ const legacyFields = ['goal', 'sources', 'steps', 'check'];
 const action = /\b(?:i|we)\s+(?:will|would|need|want|use|start|keep|return|find|expect|check|plan|should|can)\b|^(?:start|use|keep|return|find|show|list|count|sum|calculate|compare|match|link|join|group|sort|rank|classify|check|verify|include|exclude|retain|filter|take)\b|\b(?:has|have|is|are|contains?|holds?|provides?)\b/i;
 export function normalize(text) {
   return String(text || '').normalize('NFKC').toLowerCase()
-    .replace(/(\d),(?=\d{3}\b)/g, '$1').replaceAll('_', ' ').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
+    .replace(/(\d),(?=\d{3}\b)/g, '$1').replaceAll('_', ' ').replace(/[’‘]/g, "'")
+    // Treat common learner language as equivalent to the authored rubric wording.
+    .replace(/\b(?:fetch|retrieve|display)\b/g,'return')
+    .replace(/\bget\b/g,'find')
+    .replace(/\s+/g, ' ').trim();
 }
 export function thinkingText(input) {
   if(typeof input==='string')return input;
@@ -42,8 +46,8 @@ export function evaluateThinking(scenario, input) {
   const ready=!rawSql&&score>=8&&items.filter(c=>c.category!=='check').every(c=>c.passed);
   return { version:RUBRIC_VERSION, score, ready, fingerprint:fingerprint(input), items,
     message:rawSql ? 'Explain your plan in your own words before writing SQL.' :
-      ready ? 'Your plan covers the key points. The reference SQL is ready below.' :
-      'Add the missing points to your explanation. Your score updates as you type.' };
+      ready ? 'Your plan covers the key points. You can now generate the reference SQL.' :
+      'Add the missing points to your explanation, then select Check My Thinking again.' };
 }
 export function thinkingIsReady(scenario, entry) {
   return !!entry?.thinking && evaluateThinking(scenario, entry.thinking).ready

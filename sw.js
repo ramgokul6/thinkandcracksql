@@ -1,4 +1,4 @@
-const CACHE='crack-sql-thinking-v9';
+const CACHE='crack-sql-thinking-v10';
 const ROOT=new URL('./',self.location).href;
 const SHELL=['index.html','manifest.json','icon-512.png','icon-maskable-512.png','apple-touch-icon.png',
 'data/scenarios.json','js/app.js','js/thinking.js','js/progress.js','js/cloud.js','js/schema.js','js/util.js','js/scenario-generator.js'].map(p=>new URL(p,ROOT).href);

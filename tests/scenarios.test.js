@@ -30,6 +30,15 @@ test('every authored reasoning example passes and generic filler does not',()=>{
   }
 });
 
+test('common learner wording is accepted for a simple filtering approach',()=>{
+  const scenario=data.scenarios.find(s=>s.id==='BAN_BEG_001');
+  const response='fetch account details from accounts table where check the status as active';
+  const result=evaluateThinking(scenario,{response});
+  assert.equal(result.score,8);
+  assert.equal(result.ready,true);
+  assert.deepEqual(result.items.map(item=>item.passed),[true,true,true,false]);
+});
+
 test('all reference queries execute in PostgreSQL', {timeout:120000}, async()=>{
   for(const [domain,asset] of Object.entries(data.assets)) {
     const db=new PGlite();
