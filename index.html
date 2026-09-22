@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer</title>
-<meta name="description" content="Practice 420 real-world PostgreSQL exercises across seven domains. Explain your reasoning, write SQL, and verify the result in the app." />
+<title>Crack SQL | Data2Dashboard (D2D)</title>
+<meta name="description" content="Data2Dashboard (D2D) Crack SQL helps learners reason through practical SQL scenarios, generate a reference query, and practise in DB Fiddle." />
 <meta name="theme-color" content="#2563eb" />
 <link rel="canonical" href="https://thinkandcracksql.netlify.app/" />
 
@@ -14,8 +14,8 @@
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://thinkandcracksql.netlify.app/" />
-<meta property="og:title" content="Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer" />
-<meta property="og:description" content="420 exercises across seven domains. Think first, write PostgreSQL, and verify the result in the app." />
+<meta property="og:title" content="Crack SQL | Data2Dashboard (D2D)" />
+<meta property="og:description" content="Data2Dashboard (D2D) Crack SQL: explain your reasoning, get a Thinking Score, generate the reference SQL, and practise in DB Fiddle." />
 <meta property="og:image" content="https://thinkandcracksql.netlify.app/icon-512.png" />
 <meta property="og:image:width" content="512" />
 <meta property="og:image:height" content="512" />
@@ -23,7 +23,7 @@
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Crack SQL — Think Like a Data Engineer, Not Just a SQL Developer" />
-<meta name="twitter:description" content="Think first, write PostgreSQL, and verify the result across seven real-world domains." />
+<meta name="twitter:description" content="Think first, earn a Thinking Score, then validate reference SQL in DB Fiddle." />
 <meta name="twitter:image" content="https://thinkandcracksql.netlify.app/icon-512.png" />
 
 <!-- PWA -->
@@ -405,16 +405,33 @@ pre {
 }
 .small { font-size:12px; color:var(--muted); line-height:1.45; }
 .footer { color:var(--muted); text-align:center; font-size:12px; margin-top:18px; }
+.brand {font-size:12px;font-weight:850;letter-spacing:.04em;color:#1d4ed8;margin-bottom:5px}
+.auth-required,.dashboard-card {background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin:14px 0}
+.dashboard-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.dashboard-stat {background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:13px}
+.dashboard-stat strong {display:block;font-size:22px;margin-top:5px}
+.admin-table {width:100%;border-collapse:collapse;font-size:13px}
+.admin-table th,.admin-table td {text-align:left;padding:9px;border-bottom:1px solid var(--line);vertical-align:top}
+.admin-scroll {overflow:auto}
+.form-grid {display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-grid textarea {grid-column:1/-1}
+.form-grid input {min-width:0;width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}
+.challenge-prompt {white-space:pre-wrap;line-height:1.5}
 @media (max-width:380px) {
   .actions { grid-template-columns:1fr; }
   .grid { grid-template-columns:1fr; }
+}
+@media (min-width:760px) {
+  .app { max-width:980px; padding:28px 24px 36px; }
+  .grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .levels { gap:12px; }
 }
 </style>
 <style>
 [hidden] { display:none !important; }
 label { display:block; font-weight:650; margin:16px 0 6px; }
 textarea { min-height:100px; }
-#learnerSql, #copyText { min-height:180px; font-family:monospace; }
+#copyText { min-height:180px; font-family:monospace; }
 button:disabled { opacity:.5; cursor:not-allowed; }
 #improve { padding-left:22px; line-height:1.8; }
 #syncStatus { font-size:13px; }
@@ -432,8 +449,9 @@ button:disabled { opacity:.5; cursor:not-allowed; }
 <section id="home" class="screen active">
   <div class="header">
     <div>
+      <div class="brand">Data2Dashboard (D2D)</div>
       <h1>Crack SQL</h1>
-      <div class="sub">Think → Improve → SQL → Run</div>
+      <div class="sub">Think → Score → Generate SQL → DB Fiddle</div>
     </div>
     <div class="version">V2</div>
   </div>
@@ -445,21 +463,30 @@ button:disabled { opacity:.5; cursor:not-allowed; }
   <div class="ios-hint" id="iosHint" style="display:none">On iPhone: tap the Share icon, then "Add to Home Screen" to install.</div>
 
   <div class="auth-card" id="authBox"></div>
+  <div id="authRequired" class="auth-required"><h2>Sign in to start learning</h2><p class="small">Your scenarios, thinking scores, and progress are available after you sign in.</p></div>
+  <div id="learnerArea" hidden>
 
   <div class="progress-card">
     <div class="progress-top">
-      <div class="progress-label">Verified SQL progress</div>
+      <div class="progress-label">DB Fiddle practice confirmed</div>
       <div class="progress-count" id="progressCount">0 / 420</div>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     <p id="progressStages" class="small"></p>
-    <p class="small">Progress is recorded only when your query matches the expected PostgreSQL result.</p>
+    <p class="small">Progress updates when you confirm that you ran and checked the SQL in DB Fiddle. Results are not sent back to Crack SQL.</p>
     <p id="syncStatus" role="status" aria-live="polite"></p>
     <button class="progress-reset" onclick="resetProgress()">Reset my progress</button>
     <button class="progress-reset" onclick="retrySync()">Retry sync</button>
     <button class="progress-reset" onclick="importOldHistory()">Import earlier device history</button>
     <button class="progress-reset" id="importGuest" hidden onclick="importGuestProgress()">Import guest practice</button>
     <button class="progress-reset" id="importCloud" hidden onclick="importCloudHistory()">Import earlier account history</button>
+  </div>
+
+  <div class="dashboard-card" id="generateAfterAll" hidden>
+    <h2>Prepared scenario bank complete</h2>
+    <p class="small">Choose a domain and level above, then generate a fresh scenario from validated templates and the existing sample data.</p>
+    <button id="generateScenarioButton" class="action primary" onclick="generateNewScenario()" disabled>Generate a new scenario</button>
+    <p id="generatorMessage" class="small" role="status">Select a domain and level to continue.</p>
   </div>
 
   <div class="label">Choose Domain</div>
@@ -481,6 +508,23 @@ button:disabled { opacity:.5; cursor:not-allowed; }
   </div>
 
   <div class="hint">Select domain and level. Scenario opens automatically.</div>
+  <div class="dashboard-card" id="challengeCard">
+    <h2>Challenge of the Day</h2>
+    <p id="challengeStatus" class="small">Loading today’s challenge…</p>
+    <div id="challengeDetails" hidden>
+      <h3 id="challengeTitle"></h3><p id="challengePrompt"></p>
+      <p id="challengeMeta" class="small"></p>
+      <button class="action primary" id="joinChallenge" onclick="joinChallenge()">Join challenge</button>
+      <div id="challengeSubmission" hidden>
+        <label for="challengeThinking">Explain your approach</label>
+        <textarea id="challengeThinking" maxlength="8000" placeholder="Explain how you would solve this puzzle."></textarea>
+        <label for="challengeSql">Optional: add your SQL</label>
+        <textarea id="challengeSql" maxlength="12000" placeholder="You can submit your reasoning without writing SQL. SQL is optional for this challenge."></textarea>
+        <button class="action secondary" onclick="submitChallenge()">Save challenge entry</button>
+      </div>
+    </div>
+  </div>
+  </div>
 </section>
 
 <section id="practice" class="screen">
@@ -504,56 +548,61 @@ button:disabled { opacity:.5; cursor:not-allowed; }
   </div>
 
   <div class="card">
-    <div class="label" style="margin-top:0">Schema</div>
+  <div class="label" style="margin-top:0">Scenario data</div>
     <div class="schema-cards" id="schema"></div>
   </div>
 
   <div class="card">
-    <h2>1. Think through the problem</h2>
-    <p>Think like you would explain the solution to another person. SQL comes after your reasoning.</p>
+    <h2>Think through the problem</h2>
+    <p>Explain your approach in your own words, as if you were telling a colleague how to solve it.</p>
     <label for="thinking">How would you solve this problem?</label>
-    <textarea id="thinking" maxlength="8000" placeholder="In your own words: what result is needed, which data would you use, what steps would you follow, and how would you check the answer?"></textarea>
-    <div class="actions"><button class="action primary" onclick="evaluatePlan()">Check my thinking</button></div>
-    <p class="small">Write naturally in one response. The Thinking Score quietly checks the expected result, relevant data, approach and output check. You need all core points and at least 8/10 to write SQL.</p>
-    <div id="feedback" class="feedback" role="status" aria-live="polite">
-      <div class="score" id="score"></div><p id="assessmentMessage"></p>
+    <textarea id="thinking" maxlength="8000" placeholder="What result is needed? Which data would you use? What steps would you take? How would you check the result?"></textarea>
+    <p class="small">Your Thinking Score updates as you type. It checks the requested result, relevant data, solution steps and a result check. This guided score uses the scenario rubric; it is not an AI judgement.</p>
+    <div id="feedback" class="feedback active" role="status" aria-live="polite">
+      <div class="score" id="score">Thinking Score: 0/10</div><p id="assessmentMessage">Start explaining your approach. Your score will update as you type.</p>
+      <p id="scoreRubric" class="small">Score: requested result 2 · relevant data 2 · reasoning steps 4 · checking the result 2.</p>
       <ul id="improve"></ul>
+      <div id="thinkingDecode" class="pseudo" hidden><strong>A clear way to think about this:</strong><p id="expectedThinking"></p></div>
     </div>
   </div>
-  <div class="card" id="sqlSection" hidden>
-    <h2>2. Write SQL from your plan</h2>
-    <label for="learnerSql">Your PostgreSQL query</label>
-    <textarea id="learnerSql" maxlength="20000" spellcheck="false" placeholder="Write your own query here."></textarea>
-    <p id="sqlGate" class="small"></p>
-    <div class="actions">
-      <button class="action primary" id="checkSqlButton" onclick="evaluateSql()">Check my SQL</button>
-      <button class="action secondary" id="nextButton" onclick="nextScenario()" disabled>Next Scenario</button>
-    </div>
-    <div id="sqlEvaluation" class="evaluation" hidden role="status" aria-live="polite">
-      <strong id="sqlEvaluationTitle"></strong>
-      <p id="sqlEvaluationMessage"></p>
-      <pre id="sqlPreview" hidden></pre>
-    </div>
-    <h3>Optional: inspect it in DB Fiddle</h3>
+  <div class="card" id="sqlGenerateSection" hidden>
+    <h2>Ready to see the SQL?</h2>
+    <p>Your thinking score is ready. Generate the reference SQL when you’re ready to study the query.</p>
+    <button class="action primary" id="generateSql" onclick="generateSql()">Generate SQL</button>
+  </div>
+  <div class="card" id="answerSection" hidden>
+    <h2>Your SQL answer</h2>
+    <p>Your reasoning covers the key points. Here is one reference query for this scenario:</p>
+    <pre id="referenceSql"></pre>
+    <p id="sqlGate" class="small">Copy the scenario data and SQL into DB Fiddle to run and validate your answer.</p>
     <div class="actions">
       <button class="action primary" id="fiddleButton" onclick="runDbFiddle()">Open DB Fiddle</button>
-      <button class="action ghost" id="copySetup" onclick="copySetup()">Copy schema + data</button>
-      <button class="action ghost" id="copyQuery" onclick="copyQuery()">Copy my query</button>
+      <button class="action ghost" id="copySetup" onclick="copySetup()">Copy schema + sample data</button>
+      <button class="action ghost" id="copyQuery" onclick="copyQuery()">Copy SQL</button>
+      <button class="action secondary" id="confirmDbFiddle" onclick="confirmDbFiddle()" disabled>I ran and checked it in DB Fiddle</button>
     </div>
-    <p>Select PostgreSQL in DB Fiddle. Paste schema + data into its schema pane and your query into its query pane, then run.</p>
+    <p>Select PostgreSQL in DB Fiddle. Paste the copied schema + data into its schema pane, then paste the SQL into its query pane and run it. DB Fiddle's results stay there and are not sent back to this app.</p>
     <p id="fiddleFallback" hidden>If the new tab did not open, <a href="https://www.db-fiddle.com/" target="_blank" rel="noopener noreferrer">open DB Fiddle here</a>.</p>
-    <p class="small">DB Fiddle is optional. Crack SQL evaluates the query locally in a read-only PostgreSQL engine.</p>
     <p id="practiceStatus" role="status"></p>
-    <details id="solutionHelp" hidden><summary>Review suggested reasoning and reference SQL</summary>
-      <p class="small">This is one reference approach. Other correct SQL solutions are possible.</p>
-      <div id="pseudo"></div><pre id="referenceSql"></pre>
-    </details>
+    <p class="small">This is one reference approach; other correct SQL solutions may also work.</p>
+    <button class="action secondary" id="nextButton" onclick="nextScenario()" disabled>Next Scenario</button>
   </div>
   <div class="card" id="manualCopy" hidden>
     <label for="copyText">Clipboard unavailable: select and copy this text</label>
     <textarea id="copyText" readonly></textarea>
   </div>
-  <div class="footer">Crack SQL • 420 exercises • Think → Write → Verify</div>
+  <div class="footer">Data2Dashboard (D2D) • Crack SQL • Think → Score → Generate SQL → Validate in DB Fiddle</div>
+</section>
+
+<section id="admin" class="screen">
+  <div class="topbar"><button class="linkbtn" onclick="goHome()">← Back to app</button><div class="meta">D2D Admin</div></div>
+  <div class="dashboard-card"><h2>Admin dashboard</h2><p class="small">Usage and learning activity for signed-in users. The dashboard shows scores and activity, not ordinary scenario responses. Challenge entries are visible to the admin for judging.</p><button class="action ghost" onclick="loadAdminDashboard()">Refresh dashboard</button><p id="adminStatus" role="status"></p><div id="adminSummary"></div></div>
+  <div class="dashboard-card"><h2>Create a daily challenge</h2><p class="small">One ₹500 reward; the first 25 signed-in participants can enter. Publish the start/end time and judging rules in the challenge prompt.</p>
+    <div class="form-grid"><input id="newChallengeTitle" value="SQL Puzzle: Eight Queens"><input id="newChallengeStart" type="datetime-local"><input id="newChallengeEnd" type="datetime-local"><textarea id="newChallengePrompt" placeholder="Example: Model an 8×8 chessboard and use SQL to find placements for eight queens so no two share a row, column, or diagonal. State the judging and tie-break rules before the challenge opens."></textarea></div>
+    <button class="action primary" onclick="createChallenge()">Publish challenge</button>
+  </div>
+  <div class="dashboard-card"><h2>Challenge entries</h2><div id="adminChallenges"></div></div>
+  <div class="footer">Data2Dashboard (D2D) • Crack SQL Admin</div>
 </section>
 </div>
 

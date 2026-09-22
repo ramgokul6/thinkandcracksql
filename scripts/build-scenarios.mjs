@@ -67,7 +67,7 @@ function makeScenario(d,level,index,spec,schemaText) {
   return {id,domain:d.domain,level,questionNo:index,question:spec.question,pseudo:steps.map(x=>x.example).join(' '),sql:spec.sql.trim(),schemaText,tables,
     evaluation:{ordered:!!spec.ordered},
     rubric:{goal,sources,steps,check},
-    exampleThinking:{goal:goalExample,sources:sourceExample,steps:steps.map(x=>x.example).join(' '),check:checkExample}};
+    exampleThinking:[goalExample,sourceExample,...steps.map(x=>x.example),checkExample].join(' ')};
 }
 
 function specs(d) {

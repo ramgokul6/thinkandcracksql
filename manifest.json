@@ -1,7 +1,7 @@
 {
-  "name": "Crack SQL — Think Like a Data Engineer",
+  "name": "Crack SQL | Data2Dashboard (D2D)",
   "short_name": "Crack SQL",
-  "description": "Think through 420 SQL exercises, then write PostgreSQL and verify the result in the app.",
+  "description": "Think through practical SQL exercises, generate a reference query, and practise in DB Fiddle.",
   "start_url": "./index.html",
   "id": "./index.html",
   "scope": "./",
