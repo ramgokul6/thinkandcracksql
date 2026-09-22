@@ -1,7 +1,7 @@
-const CACHE='crack-sql-thinking-v6';
+const CACHE='crack-sql-thinking-v8';
 const ROOT=new URL('./',self.location).href;
 const SHELL=['index.html','manifest.json','icon-512.png','icon-maskable-512.png','apple-touch-icon.png',
-'data/scenarios.json','js/app.js','js/thinking.js','js/progress.js','js/cloud.js','js/schema.js','js/util.js'].map(p=>new URL(p,ROOT).href);
+'data/scenarios.json','js/app.js','js/thinking.js','js/progress.js','js/cloud.js','js/schema.js','js/util.js','js/scenario-generator.js'].map(p=>new URL(p,ROOT).href);
 self.addEventListener('install',event=>{
   // Fail installation as a unit if an asset is absent. Keep the last working version.
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));

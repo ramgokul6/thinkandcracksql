@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "build:scenarios": "node scripts/build-scenarios.mjs",
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test",
+    "test:all": "pnpm test && pnpm test:e2e"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

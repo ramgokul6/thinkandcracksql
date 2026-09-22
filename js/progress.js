@@ -11,6 +11,7 @@ export function sanitize(value, ids) {
     // Keep earlier four-box answers readable after upgrading to the single-box UI.
     for(const k of ['goal','sources','steps','check'])thinking[k]=String(entry.thinking?.[k]||'').slice(0,4000);
     result.entries[id] = {thinking, sql:String(entry.sql || '').slice(0,20000),
+      referenceSql:String(entry.referenceSql || '').slice(0,20000), sqlGenerated:!!entry.sqlGenerated,
       assessment: entry.assessment && typeof entry.assessment === 'object' ? entry.assessment : null,
       fiddleFingerprint: typeof entry.fiddleFingerprint === 'string' ? entry.fiddleFingerprint : null,
       externalValidationFingerprint: typeof entry.externalValidationFingerprint === 'string' ? entry.externalValidationFingerprint : null,
@@ -54,9 +55,10 @@ export function workFingerprint(entry) {
 export function stage(scenario,entry) {
   if(!entry) return 'not_started';
   if(!thinkingIsReady(scenario,entry)) return entry.legacyViewed?'answer_viewed':'thinking';
+  if(!entry.sqlGenerated || !entry.referenceSql) return 'thinking_ready';
   if(entry.externalValidationFingerprint===workFingerprint(entry)) return 'practice_confirmed';
   if(entry.fiddleFingerprint===workFingerprint(entry)) return 'fiddle_opened';
-  return 'thinking_ready';
+  return 'sql_generated';
 }
 export function chooseNext(pool,state,currentId) {
   return pool.find(s=>s.id!==currentId && stage(s,state.entries[s.id])!=='practice_confirmed')
